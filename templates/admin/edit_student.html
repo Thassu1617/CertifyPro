@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Edit Student — CertifyPro{% endblock %}
+{% block content %}
+<div class="admin-layout">
+    <aside class="admin-sidebar glass">{% include "admin/_sidebar.html" %}</aside>
+    <div class="admin-main">
+        {% include "admin/_topbar.html" %}
+        <div class="admin-content">
+            <div class="page-header">
+                <h1><i class="fas fa-user-edit"></i> Edit Student</h1>
+                <a href="{{ url_for('admin.students') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back</a>
+            </div>
+
+            <div class="form-card glass fade-in">
+                <div class="edit-student-header">
+                    <div class="edit-avatar">
+                        {% if student.profile_image %}
+                        <img src="{{ url_for('static', filename=student.profile_image) }}" alt="photo">
+                        {% else %}
+                        <div class="avatar-lg"><i class="fas fa-user-graduate"></i></div>
+                        {% endif %}
+                    </div>
+                    <div class="edit-title">
+                        <h2>{{ student.user.full_name }}</h2>
+                        <p><code>{{ student.student_id }}</code> · {{ student.department or 'No department' }} · Semester {{ student.semester or '-' }}</p>
+                    </div>
+                </div>
+
+                <form method="POST" enctype="multipart/form-data" class="admin-form">
+                    <div class="form-columns">
+                        <div class="form-left">
+                            <h3>Account Information</h3>
+                            <div class="form-group">
+                                <label for="email"><i class="fas fa-envelope"></i> Email <span class="required">*</span></label>
+                                <input type="email" id="email" name="email" value="{{ student.user.email }}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="new_password"><i class="fas fa-key"></i> New Password</label>
+                                <input type="password" id="new_password" name="new_password" placeholder="Leave blank to keep current" minlength="6">
+                                <small class="form-hint">Only fill this if you want to change the password</small>
+                            </div>
+
+                            <h3 style="margin-top:24px">Personal Information</h3>
+                            <div class="form-group">
+                                <label for="full_name"><i class="fas fa-id-card"></i> Full Name <span class="required">*</span></label>
+                                <input type="text" id="full_name" name="full_name" value="{{ student.user.full_name }}" required>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="phone"><i class="fas fa-phone"></i> Phone</label>
+                                    <input type="text" id="phone" name="phone" value="{{ student.phone or '' }}">
+                                </div>
+                                <div class="form-group">
+                                    <label for="semester"><i class="fas fa-layer-group"></i> Semester</label>
+                                    <input type="number" id="semester" name="semester" value="{{ student.semester or 1 }}" min="1" max="12">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-right">
+                            <h3>Academic Information</h3>
+                            <div class="form-group">
+                                <label for="department"><i class="fas fa-building"></i> Department</label>
+                                <select id="department" name="department">
+                                    <option value="">Select Department...</option>
+                                    {% for dept in ['Computer Science','Information Technology','Electronics & Communication','Mechanical Engineering','Civil Engineering','Electrical Engineering','Business Administration','Mathematics','Physics','Chemistry'] %}
+                                    <option value="{{ dept }}" {{ 'selected' if student.department == dept }}>{{ dept }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="address"><i class="fas fa-map-marker-alt"></i> Address</label>
+                                <textarea id="address" name="address" rows="3">{{ student.address or '' }}</textarea>
+                            </div>
+
+                            <h3 style="margin-top:24px">Profile Photo</h3>
+                            <div class="photo-upload-area" id="photoDropArea">
+                                <div class="photo-upload-preview" id="photoPreview">
+                                    <i class="fas fa-camera"></i>
+                                    <p>Click to change photo</p>
+                                    <small>JPG, PNG or GIF. Max 2MB.</small>
+                                </div>
+                                <input type="file" id="profile_image" name="profile_image" accept="image/*" class="photo-input">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <a href="{{ url_for('admin.students') }}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Update Student</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

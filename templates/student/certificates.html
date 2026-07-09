@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}My Certificates — CertifyPro{% endblock %}
+{% block content %}
+<div class="student-dashboard">
+    <div class="sd-hero fade-in" style="margin-bottom:0">
+        <div class="sd-hero-avatar">
+            {% if student.profile_image %}
+            <img src="{{ url_for('static', filename=student.profile_image) }}" alt="">
+            {% else %}
+            <div class="sd-avatar-placeholder"><i class="fas fa-user-graduate"></i></div>
+            {% endif %}
+        </div>
+        <div class="sd-hero-info">
+            <h1>My Certificates</h1>
+            <div class="sd-hero-meta">
+                <span><i class="fas fa-id-badge"></i> <code>{{ student.student_id }}</code></span>
+                <span><i class="fas fa-building"></i> {{ student.department or 'Not assigned' }}</span>
+                <span><i class="fas fa-certificate"></i> {{ certificates|length }} issued</span>
+            </div>
+        </div>
+    </div>
+
+    <div style="padding:0 24px;max-width:1280px;margin:0 auto" class="fade-in">
+        {% if certificates %}
+        <div class="sd-cert-grid">
+            {% for c in certificates %}
+            <div class="sd-cert-card glass">
+                <div class="sd-cert-ribbon {{ 'valid' if c.is_valid else 'revoked' }}">
+                    {{ 'Valid' if c.is_valid else 'Revoked' }}
+                </div>
+                <div class="sd-cert-icon">
+                    <i class="fas fa-certificate"></i>
+                </div>
+                <h3>{{ c.course.course_name }}</h3>
+                <p class="sd-cert-code"><code>{{ c.course.course_code }}</code></p>
+                <div class="sd-cert-details">
+                    <div class="sd-cert-row"><span>Grade</span><strong>{{ c.grade }}</strong></div>
+                    <div class="sd-cert-row"><span>Score</span><strong>{{ "%.1f"|format(c.marks_obtained) }}/{{ "%.0f"|format(c.total_marks) }}</strong></div>
+                    <div class="sd-cert-row"><span>Issued</span><strong>{{ c.completion_date.strftime('%b %d, %Y') if c.completion_date else '-' }}</strong></div>
+                    <div class="sd-cert-row"><span>Cert ID</span><strong><code style="font-size:0.7rem">{{ c.cert_id[:20] }}...</code></strong></div>
+                </div>
+                <div class="sd-cert-actions">
+                    <a href="{{ url_for('admin.download_certificate', id=c.id) }}" class="btn btn-primary btn-sm" style="width:100%;justify-content:center">
+                        <i class="fas fa-download"></i> Download PDF
+                    </a>
+                    <a href="{{ url_for('main.verify', cert_id=c.cert_id) }}" class="btn btn-secondary btn-sm" style="width:100%;justify-content:center;margin-top:8px">
+                        <i class="fas fa-shield-alt"></i> Verify
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="sd-card glass" style="text-align:center;padding:60px">
+            <i class="fas fa-certificate empty-icon" style="font-size:3rem;opacity:0.3"></i>
+            <h3 style="margin-top:16px;color:var(--text-muted)">No certificates yet</h3>
+            <p style="color:var(--text-muted);font-size:0.9rem">Certificates will appear here once issued by your institution</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

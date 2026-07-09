@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+venv/
+.venv/
+database/*.db
+static/uploads/profiles/*
+static/certificates_output/*
+!static/uploads/profiles/.gitkeep
+!static/certificates_output/.gitkeep
+!ML_model/*.joblib
+*.egg-info/
+dist/
+build/
+.Python

@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Verify Certificate — CertifyPro{% endblock %}
+{% block content %}
+<section class="verify-section fade-in">
+    <div class="verify-card glass">
+
+        <!-- Search Mode -->
+        {% if not cert and not not_found %}
+        <div class="verify-icon"><i class="fas fa-shield-alt"></i></div>
+        <h2>Certificate Verification</h2>
+        <p>Enter the Certificate ID below to verify its authenticity</p>
+        <form class="verify-form" method="GET" action="{{ url_for('main.verify') }}">
+            <div class="input-group">
+                <input type="text" name="cert_id" class="verify-input" placeholder="e.g. CERT-A1B2C3D4E5F6" value="{{ search_value }}" required>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Verify</button>
+            </div>
+        </form>
+        <div class="verify-hint">
+            <i class="fas fa-qrcode"></i>
+            <span>You can also scan the QR code on the certificate to verify instantly</span>
+        </div>
+
+        <!-- Not Found -->
+        {% elif not_found %}
+        <div class="verify-icon"><i class="fas fa-exclamation-triangle" style="color:var(--danger)"></i></div>
+        <h2>Certificate Not Found</h2>
+        <div class="result-badge invalid">
+            <i class="fas fa-times-circle"></i>
+            INVALID CERTIFICATE ID
+        </div>
+        <div class="verify-details">
+            <div class="verify-detail-row">
+                <span>Searched ID</span>
+                <strong><code>{{ not_found }}</code></strong>
+            </div>
+        </div>
+        <p style="margin-top:20px;color:var(--text-muted)">
+            No certificate matches the ID you entered. Please check the ID or try scanning the QR code again.
+        </p>
+        <button class="btn btn-secondary" onclick="document.querySelector('.verify-input')?.focus();window.history.replaceState(null,'','/verify')" style="margin-top:16px">
+            <i class="fas fa-redo"></i> Try Again
+        </button>
+
+        <!-- Result: Valid or Revoked -->
+        {% elif cert %}
+        <div class="verify-icon result-animated">
+            {% if cert.is_valid %}
+            <i class="fas fa-check-circle" style="color:var(--accent)"></i>
+            {% else %}
+            <i class="fas fa-times-circle" style="color:var(--danger)"></i>
+            {% endif %}
+        </div>
+        <h2>Certificate Verification Result</h2>
+
+        <div class="result-badge {{ 'valid' if cert.is_valid else 'invalid' }} result-animated">
+            <i class="fas {{ 'fa-check-circle' if cert.is_valid else 'fa-times-circle' }}"></i>
+            {% if cert.is_valid %}
+            <span>✓ VALID CERTIFICATE</span>
+            {% else %}
+            <span>✗ CERTIFICATE REVOKED</span>
+            {% endif %}
+        </div>
+
+        {% if cert.is_valid %}
+        <div class="verify-seal">
+            <i class="fas fa-certificate"></i>
+        </div>
+        {% endif %}
+
+        <div class="verify-details">
+            <div class="verify-detail-row">
+                <span><i class="fas fa-fingerprint"></i> Certificate ID</span>
+                <strong><code>{{ cert.cert_id }}</code></strong>
+            </div>
+            <div class="verify-detail-row">
+                <span><i class="fas fa-user-graduate"></i> Student</span>
+                <strong>{{ cert.student.user.full_name }}</strong>
+            </div>
+            <div class="verify-detail-row">
+                <span><i class="fas fa-id-badge"></i> Student ID</span>
+                <strong><code>{{ cert.student.student_id }}</code></strong>
+            </div>
+            <div class="verify-detail-row">
+                <span><i class="fas fa-book"></i> Course</span>
+                <strong>{{ cert.course.course_name }} <code>({{ cert.course.course_code }})</code></strong>
+            </div>
+            <div class="verify-detail-row">
+                <span><i class="fas fa-award"></i> Grade</span>
+                <strong><span class="badge grade-{{ cert.grade|lower }}" style="font-size:0.9rem;padding:4px 14px">{{ cert.grade }}</span></strong>
+            </div>
+            <div class="verify-detail-row">
+                <span><i class="fas fa-star"></i> Score</span>
+                <strong>{{ "%.1f"|format(cert.marks_obtained) }}/{{ "%.0f"|format(cert.total_marks) }}</strong>
+            </div>
+            <div class="verify-detail-row">
+                <span><i class="fas fa-calendar-check"></i> Issue Date</span>
+                <strong>{{ cert.completion_date.strftime('%B %d, %Y') if cert.completion_date else '-' }}</strong>
+            </div>
+            <div class="verify-detail-row">
+                <span><i class="fas fa-user-tie"></i> Issued By</span>
+                <strong>{{ cert.issued_by }}</strong>
+            </div>
+        </div>
+
+        {% if cert.qr_code_path %}
+        <div class="verify-qr">
+            <div class="verify-qr-label">
+                <i class="fas fa-qrcode"></i> QR Code
+            </div>
+            <img src="{{ url_for('static', filename=cert.qr_code_path) }}" alt="Verification QR Code">
+        </div>
+        {% endif %}
+
+        <div class="verify-timestamp">
+            <i class="fas fa-clock"></i>
+            Verified on <strong>{{ now().strftime('%B %d, %Y at %I:%M %p') }}</strong>
+        </div>
+
+        <div style="margin-top:20px">
+            <a href="{{ url_for('main.verify') }}" class="btn btn-secondary">
+                <i class="fas fa-redo"></i> Verify Another
+            </a>
+        </div>
+        {% endif %}
+
+    </div>
+</section>
+{% endblock %}

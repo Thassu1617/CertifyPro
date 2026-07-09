@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard — CertifyPro{% endblock %}
+{% block content %}
+<div class="admin-layout">
+    <aside class="admin-sidebar glass">{% include "admin/_sidebar.html" %}</aside>
+
+    <div class="admin-main">
+        {% include "admin/_topbar.html" %}
+
+        <div class="admin-content">
+            <div class="stats-grid">
+                <div class="stat-card glass fade-in" style="--card-color: #6c63ff;">
+                    <div class="stat-icon"><i class="fas fa-user-graduate"></i></div>
+                    <div class="stat-body">
+                        <h3 class="counter" data-target="{{ stats.students }}">0</h3>
+                        <p>Total Students</p>
+                    </div>
+                    <div class="stat-trend up"><i class="fas fa-arrow-up"></i> 12%</div>
+                </div>
+                <div class="stat-card glass fade-in" style="--card-color: #00d4aa;">
+                    <div class="stat-icon"><i class="fas fa-certificate"></i></div>
+                    <div class="stat-body">
+                        <h3 class="counter" data-target="{{ stats.certificates }}">0</h3>
+                        <p>Certificates</p>
+                    </div>
+                    <div class="stat-trend up"><i class="fas fa-arrow-up"></i> 8%</div>
+                </div>
+                <div class="stat-card glass fade-in" style="--card-color: #ff9800;">
+                    <div class="stat-icon"><i class="fas fa-book"></i></div>
+                    <div class="stat-body">
+                        <h3 class="counter" data-target="{{ stats.courses }}">0</h3>
+                        <p>Courses</p>
+                    </div>
+                    <div class="stat-trend up"><i class="fas fa-arrow-up"></i> 5%</div>
+                </div>
+                <div class="stat-card glass fade-in" style="--card-color: #ff4757;">
+                    <div class="stat-icon"><i class="fas fa-brain"></i></div>
+                    <div class="stat-body">
+                        <h3 class="counter" data-target="{{ stats.predictions }}">0</h3>
+                        <p>Predictions</p>
+                    </div>
+                    <div class="stat-trend"><i class="fas fa-arrow-up"></i> 15%</div>
+                </div>
+            </div>
+
+            <div class="dashboard-row">
+                <div class="chart-card glass fade-in">
+                    <div class="chart-header">
+                        <h3><i class="fas fa-chart-bar"></i> Certificates Overview</h3>
+                        <select class="chart-filter" id="chartFilter">
+                            <option>Monthly</option>
+                            <option>Weekly</option>
+                        </select>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="certChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card glass fade-in">
+                    <div class="chart-header">
+                        <h3><i class="fas fa-chart-doughnut"></i> Grade Distribution</h3>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="gradeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-row">
+                <div class="activity-card glass fade-in">
+                    <div class="card-header">
+                        <h3><i class="fas fa-clock"></i> Recent Certificates</h3>
+                        <a href="{{ url_for('admin.certificates') }}" class="view-all">View All</a>
+                    </div>
+                    <div class="activity-list">
+                        {% for c in recent_certs %}
+                        <div class="activity-item">
+                            <div class="activity-icon cert-bg"><i class="fas fa-certificate"></i></div>
+                            <div class="activity-detail">
+                                <strong>{{ c.student.user.full_name }}</strong>
+                                <small>{{ c.course.course_name }} — Grade: {{ c.grade }}</small>
+                            </div>
+                            <span class="activity-time">{{ c.created_at.strftime('%d %b') }}</span>
+                        </div>
+                        {% else %}
+                        <div class="activity-empty">No certificates yet</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="activity-card glass fade-in">
+                    <div class="card-header">
+                        <h3><i class="fas fa-brain"></i> Recent Predictions</h3>
+                        <a href="{{ url_for('admin.predictions') }}" class="view-all">View All</a>
+                    </div>
+                    <div class="activity-list">
+                        {% for p in recent_preds %}
+                        <div class="activity-item">
+                            <div class="activity-icon pred-bg"><i class="fas fa-robot"></i></div>
+                            <div class="activity-detail">
+                                <strong>{{ p.student.user.full_name }}</strong>
+                                <small>{{ p.predicted_performance }} — Confidence: {{ "%.0f"|format(p.confidence_score * 100) }}%</small>
+                            </div>
+                            <span class="activity-time">{{ p.created_at.strftime('%d %b') }}</span>
+                        </div>
+                        {% else %}
+                        <div class="activity-empty">No predictions yet</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+const monthlyData = {{ monthly_certs|tojson }};
+const gradeData = {{ grade_data|tojson }};
+
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx1 = document.getElementById('certChart')?.getContext('2d');
+    if (ctx1 && monthlyData.length) {
+        new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: monthlyData.map(d => d.month),
+                datasets: [{
+                    label: 'Certificates',
+                    data: monthlyData.map(d => d.count),
+                    backgroundColor: 'rgba(108, 99, 255, 0.6)',
+                    borderColor: '#6c63ff',
+                    borderWidth: 2,
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8888a0' } },
+                    x: { grid: { display: false }, ticks: { color: '#8888a0' } }
+                }
+            }
+        });
+    } else if (ctx1) {
+        new Chart(ctx1, {
+            type: 'bar',
+            data: { labels: ['Jan','Feb','Mar','Apr','May','Jun'], datasets: [{ data: [0,0,0,0,0,0], backgroundColor: 'rgba(108,99,255,0.4)' }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+    }
+
+    const ctx2 = document.getElementById('gradeChart')?.getContext('2d');
+    if (ctx2) {
+        const labels = Object.keys(gradeData).length ? Object.keys(gradeData) : ['A+','A','B','C','D'];
+        const values = Object.keys(gradeData).length ? Object.values(gradeData) : [0,0,0,0,0];
+        new Chart(ctx2, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: ['#6c63ff','#00d4aa','#ff9800','#ff4757','#9C27B0'],
+                    borderWidth: 0,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: '#8888a0', padding: 12, usePointStyle: true } }
+                },
+                cutout: '65%',
+            }
+        });
+    }
+});
+
+function toggleSidebar() {
+    document.querySelector('.admin-sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('show');
+}
+</script>
+{% endblock %}

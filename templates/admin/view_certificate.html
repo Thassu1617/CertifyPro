@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Certificate {{ cert.cert_id[:16] }}… — CertifyPro{% endblock %}
+{% block content %}
+<div class="admin-layout">
+    <aside class="admin-sidebar glass">{% include "admin/_sidebar.html" %}</aside>
+    <div class="admin-main">
+        {% include "admin/_topbar.html" %}
+        <div class="admin-content">
+            <div class="page-header">
+                <h1><i class="fas fa-certificate"></i> Certificate Details</h1>
+                <div class="header-actions">
+                    <a href="{{ url_for('admin.download_certificate', id=cert.id) }}" class="btn btn-primary"><i class="fas fa-download"></i> Download PDF</a>
+                    <form method="POST" action="{{ url_for('admin.revoke_certificate', id=cert.id) }}" style="display:inline">
+                        <button type="submit" class="btn {{ 'btn-secondary' if cert.is_valid else 'btn-primary' }}"
+                            onclick="return confirm('{{ 'Revoke' if cert.is_valid else 'Reinstate' }} this certificate?')">
+                            <i class="fas {{ 'fa-ban' if cert.is_valid else 'fa-check' }}"></i>
+                            {{ 'Revoke' if cert.is_valid else 'Reinstate' }}
+                        </button>
+                    </form>
+                    <a href="{{ url_for('admin.certificates') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back</a>
+                </div>
+            </div>
+
+            <div class="profile-card glass fade-in">
+                <div class="profile-header">
+                    <div class="profile-avatar">
+                        <div class="profile-avatar-placeholder"><i class="fas fa-certificate"></i></div>
+                    </div>
+                    <div class="profile-info">
+                        <h2>Certificate {{ cert.cert_id }}</h2>
+                        <p class="profile-meta">
+                            <span><i class="fas fa-user"></i> {{ cert.student.user.full_name }}</span>
+                            <span><i class="fas fa-id-badge"></i> <code>{{ cert.student.student_id }}</code></span>
+                            <span><i class="fas {{ 'fa-check-circle' if cert.is_valid else 'fa-times-circle' }}" style="color:{{ 'var(--accent)' if cert.is_valid else 'var(--danger)' }}"></i> {{ 'Valid' if cert.is_valid else 'Revoked' }}</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-row" style="margin-top:24px">
+                <div class="glass chart-card fade-in">
+                    <h3><i class="fas fa-info-circle"></i> Certificate Information</h3>
+                    <div class="profile-list">
+                        <div class="profile-list-item"><i class="fas fa-id-card" style="color:var(--primary)"></i> <strong>Cert ID</strong><span style="margin-left:auto"><code>{{ cert.cert_id }}</code></span></div>
+                        <div class="profile-list-item"><i class="fas fa-user-graduate" style="color:var(--accent)"></i> <strong>Student</strong><span style="margin-left:auto">{{ cert.student.user.full_name }}</span></div>
+                        <div class="profile-list-item"><i class="fas fa-book" style="color:var(--primary)"></i> <strong>Course</strong><span style="margin-left:auto">{{ cert.course.course_name }} ({{ cert.course.course_code }})</span></div>
+                        <div class="profile-list-item"><i class="fas fa-award" style="color:#ff9800"></i> <strong>Grade</strong><span style="margin-left:auto"><span class="badge grade-{{ cert.grade|lower }}">{{ cert.grade }}</span></span></div>
+                        <div class="profile-list-item"><i class="fas fa-star" style="color:var(--accent)"></i> <strong>Score</strong><span style="margin-left:auto">{{ "%.1f"|format(cert.marks_obtained) }}/{{ "%.0f"|format(cert.total_marks) }}</span></div>
+                        <div class="profile-list-item"><i class="fas fa-calendar" style="color:var(--text-muted)"></i> <strong>Issue Date</strong><span style="margin-left:auto">{{ cert.completion_date.strftime('%B %d, %Y') if cert.completion_date else '-' }}</span></div>
+                        <div class="profile-list-item"><i class="fas fa-user-tie" style="color:var(--text-muted)"></i> <strong>Issued By</strong><span style="margin-left:auto">{{ cert.issued_by }}</span></div>
+                    </div>
+                </div>
+
+                <div class="glass chart-card fade-in" style="text-align:center">
+                    <h3><i class="fas fa-qrcode"></i> Verification QR Code</h3>
+                    {% if cert.qr_code_path %}
+                    <div style="margin:20px auto;width:160px;height:160px;background:var(--surface);border-radius:12px;padding:12px;border:1px solid var(--border)">
+                        <img src="{{ url_for('static', filename=cert.qr_code_path) }}" alt="QR" style="width:100%;height:100%;object-fit:contain">
+                    </div>
+                    <p style="font-size:0.82rem;color:var(--text-muted)">Scan to verify at /verify/{{ cert.cert_id }}</p>
+                    {% else %}
+                    <div class="profile-empty">No QR code generated</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}View Student — CertifyPro{% endblock %}
+{% block content %}
+<div class="admin-layout">
+    <aside class="admin-sidebar glass">{% include "admin/_sidebar.html" %}</aside>
+    <div class="admin-main">
+        {% include "admin/_topbar.html" %}
+        <div class="admin-content">
+            <div class="page-header">
+                <h1><i class="fas fa-user"></i> Student Profile</h1>
+                <div class="header-actions">
+                    <a href="{{ url_for('admin.edit_student', id=student.id) }}" class="btn btn-primary"><i class="fas fa-edit"></i> Edit</a>
+                    <a href="{{ url_for('admin.students') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back</a>
+                </div>
+            </div>
+
+            <div class="profile-card glass fade-in">
+                <div class="profile-header">
+                    <div class="profile-avatar">
+                        {% if student.profile_image %}
+                        <img src="{{ url_for('static', filename=student.profile_image) }}" alt="photo">
+                        {% else %}
+                        <div class="profile-avatar-placeholder"><i class="fas fa-user-graduate"></i></div>
+                        {% endif %}
+                    </div>
+                    <div class="profile-info">
+                        <h2>{{ student.user.full_name }}</h2>
+                        <p class="profile-meta">
+                            <span><i class="fas fa-id-badge"></i> {{ student.student_id }}</span>
+                            <span><i class="fas fa-building"></i> {{ student.department or 'Not assigned' }}</span>
+                            <span><i class="fas fa-layer-group"></i> Semester {{ student.semester or '-' }}</span>
+                        </p>
+                        <p class="profile-contact">
+                            <span><i class="fas fa-envelope"></i> {{ student.user.email }}</span>
+                            {% if student.phone %}<span><i class="fas fa-phone"></i> {{ student.phone }}</span>{% endif %}
+                        </p>
+                    </div>
+                </div>
+                {% if student.address %}
+                <div class="profile-address">
+                    <i class="fas fa-map-marker-alt"></i> {{ student.address }}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="dashboard-row" style="margin-top:24px">
+                <div class="glass chart-card fade-in">
+                    <h3><i class="fas fa-book-open"></i> Enrolled Courses ({{ enrollments|length }})</h3>
+                    <div class="profile-list">
+                        {% for e in enrollments %}
+                        <div class="profile-list-item"><i class="fas fa-check-circle" style="color:var(--accent)"></i> {{ e.course.course_name }} <small>({{ e.course.course_code }})</small></div>
+                        {% else %}
+                        <div class="profile-empty">No enrollments</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="glass chart-card fade-in">
+                    <h3><i class="fas fa-certificate"></i> Certificates ({{ certificates|length }})</h3>
+                    <div class="profile-list">
+                        {% for c in certificates %}
+                        <div class="profile-list-item"><i class="fas fa-award" style="color:#ff9800"></i> {{ c.course.course_name }} — Grade: <strong>{{ c.grade }}</strong></div>
+                        {% else %}
+                        <div class="profile-empty">No certificates yet</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-row" style="margin-top:24px">
+                <div class="glass chart-card fade-in">
+                    <h3><i class="fas fa-clipboard-list"></i> Marks ({{ marks|length }})</h3>
+                    <div class="profile-list">
+                        {% for m in marks %}
+                        <div class="profile-list-item">{{ m.course.course_name }} — <strong>{{ "%.1f"|format(m.marks_obtained) }}/{{ "%.0f"|format(m.total_marks) }}</strong> <small>(Att: {{ "%.0f"|format(m.attendance) }}%)</small></div>
+                        {% else %}
+                        <div class="profile-empty">No marks recorded</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="glass chart-card fade-in">
+                    <h3><i class="fas fa-brain"></i> Predictions ({{ predictions|length }})</h3>
+                    <div class="profile-list">
+                        {% for p in predictions %}
+                        <div class="profile-list-item"><i class="fas fa-robot" style="color:var(--primary)"></i> {{ p.course.course_name }} → <strong>{{ p.predicted_performance }}</strong> <small>({{ "%.0f"|format(p.confidence_score * 100) }}% confidence)</small></div>
+                        {% else %}
+                        <div class="profile-empty">No predictions yet</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

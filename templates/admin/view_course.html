@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}{{ course.course_code }} — CertifyPro{% endblock %}
+{% block content %}
+<div class="admin-layout">
+    <aside class="admin-sidebar glass">{% include "admin/_sidebar.html" %}</aside>
+    <div class="admin-main">
+        {% include "admin/_topbar.html" %}
+        <div class="admin-content">
+            <div class="page-header">
+                <h1><i class="fas fa-book"></i> Course Details</h1>
+                <div class="header-actions">
+                    <a href="{{ url_for('admin.edit_course', id=course.id) }}" class="btn btn-primary"><i class="fas fa-edit"></i> Edit</a>
+                    <a href="{{ url_for('admin.courses') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back</a>
+                </div>
+            </div>
+
+            <div class="profile-card glass fade-in">
+                <div class="profile-header">
+                    <div class="profile-avatar">
+                        <div class="profile-avatar-placeholder"><i class="fas fa-book"></i></div>
+                    </div>
+                    <div class="profile-info">
+                        <h2>{{ course.course_name }}</h2>
+                        <p class="profile-meta">
+                            <span><i class="fas fa-code"></i> <code>{{ course.course_code }}</code></span>
+                            <span><i class="fas fa-weight"></i> {{ course.credits }} Credits</span>
+                            <span><i class="fas fa-calendar-alt"></i> Added {{ course.created_at.strftime('%Y-%m-%d') if course.created_at else '-' }}</span>
+                        </p>
+                    </div>
+                </div>
+                {% if course.description %}
+                <div class="profile-address">
+                    <i class="fas fa-align-left"></i> {{ course.description }}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="dashboard-row" style="margin-top:24px">
+                <div class="glass chart-card fade-in">
+                    <h3><i class="fas fa-user-graduate"></i> Enrolled Students ({{ enrollments|length }})</h3>
+                    <div class="profile-list">
+                        {% for e in enrollments %}
+                        <div class="profile-list-item">
+                            <i class="fas fa-user" style="color:var(--primary)"></i>
+                            <a href="{{ url_for('admin.view_student', id=e.student.id) }}" style="color:var(--text);text-decoration:none">
+                                <strong>{{ e.student.user.full_name }}</strong>
+                            </a>
+                            <small><code>{{ e.student.student_id }}</code></small>
+                            <small style="color:var(--text-muted);margin-left:auto">{{ e.enrolled_at.strftime('%Y-%m-%d') if e.enrolled_at else '' }}</small>
+                        </div>
+                        {% else %}
+                        <div class="profile-empty">
+                            <i class="fas fa-user-plus empty-icon" style="font-size:2rem"></i>
+                            <h3>No enrollments yet</h3>
+                            <p>Students will appear here once they enroll in this course</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="glass chart-card fade-in">
+                    <h3><i class="fas fa-chart-bar"></i> Course Stats</h3>
+                    <div class="profile-list">
+                        <div class="profile-list-item">
+                            <i class="fas fa-users" style="color:var(--accent)"></i>
+                            <strong>Total Enrollments</strong>
+                            <span style="margin-left:auto;font-size:1.2rem;font-weight:700;color:var(--primary)">{{ enrollments|length }}</span>
+                        </div>
+                        <div class="profile-list-item">
+                            <i class="fas fa-certificate" style="color:#ff9800"></i>
+                            <strong>Certificates Issued</strong>
+                            <span style="margin-left:auto;font-size:1.2rem;font-weight:700;color:var(--primary)">{{ cert_count }}</span>
+                        </div>
+                        <div class="profile-list-item" style="border-top:1px solid var(--border);margin-top:8px;padding-top:16px">
+                            <i class="fas fa-info-circle" style="color:var(--text-muted)"></i>
+                            <small style="color:var(--text-muted)">Course created {{ course.created_at.strftime('%B %d, %Y') if course.created_at else 'N/A' }}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

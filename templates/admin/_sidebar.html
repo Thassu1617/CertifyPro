@@ -1,0 +1,31 @@
+<div class="sidebar-brand">
+    <i class="fas fa-certificate"></i> Certify<span>Pro</span>
+</div>
+<nav class="sidebar-nav">
+    <a href="{{ url_for('admin.dashboard') }}" class="sidebar-link {{ 'active' if request.endpoint == 'admin.dashboard' }}">
+        <i class="fas fa-chart-pie"></i> <span>Dashboard</span>
+    </a>
+    <a href="{{ url_for('admin.students') }}" class="sidebar-link {{ 'active' if request.endpoint == 'admin.students' }}">
+        <i class="fas fa-user-graduate"></i> <span>Students</span>
+    </a>
+    <a href="{{ url_for('admin.courses') }}" class="sidebar-link {{ 'active' if request.endpoint == 'admin.courses' }}">
+        <i class="fas fa-book"></i> <span>Courses</span>
+    </a>
+    <a href="{{ url_for('admin.marks') }}" class="sidebar-link {{ 'active' if request.endpoint == 'admin.marks' }}">
+        <i class="fas fa-clipboard-list"></i> <span>Marks</span>
+    </a>
+    <a href="{{ url_for('admin.predictions') }}" class="sidebar-link {{ 'active' if request.endpoint == 'admin.predictions' }}">
+        <i class="fas fa-brain"></i> <span>Predictions</span>
+    </a>
+    <a href="{{ url_for('admin.certificates') }}" class="sidebar-link {{ 'active' if request.endpoint == 'admin.certificates' }}">
+        <i class="fas fa-certificate"></i> <span>Certificates</span>
+    </a>
+</nav>
+<div class="sidebar-footer">
+    <a href="{{ url_for('main.index') }}" class="sidebar-link">
+        <i class="fas fa-home"></i> <span>Home</span>
+    </a>
+    <a href="{{ url_for('auth.logout') }}" class="sidebar-link logout">
+        <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+    </a>
+</div>

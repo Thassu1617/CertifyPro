@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Add Course — CertifyPro{% endblock %}
+{% block content %}
+<div class="admin-layout">
+    <aside class="admin-sidebar glass">{% include "admin/_sidebar.html" %}</aside>
+    <div class="admin-main">
+        {% include "admin/_topbar.html" %}
+        <div class="admin-content">
+            <div class="page-header">
+                <h1><i class="fas fa-book-plus"></i> Add Course</h1>
+                <a href="{{ url_for('admin.courses') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back</a>
+            </div>
+
+            <div class="form-card glass fade-in">
+                <form method="POST" class="admin-form">
+                    <div class="form-columns">
+                        <div class="form-left">
+                            <h3>Course Information</h3>
+                            <div class="form-group">
+                                <label for="course_code"><i class="fas fa-code"></i> Course Code <span class="required">*</span></label>
+                                <input type="text" id="course_code" name="course_code" placeholder="e.g., CS101" required>
+                                <small class="form-hint">Unique alphanumeric code, will be auto-uppercased</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="course_name"><i class="fas fa-book"></i> Course Name <span class="required">*</span></label>
+                                <input type="text" id="course_name" name="course_name" placeholder="e.g., Introduction to Computer Science" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="credits"><i class="fas fa-weight"></i> Credits</label>
+                                <input type="number" id="credits" name="credits" value="3" min="1" max="20">
+                            </div>
+                        </div>
+                        <div class="form-right">
+                            <h3>Description</h3>
+                            <div class="form-group">
+                                <label for="description"><i class="fas fa-align-left"></i> Course Description</label>
+                                <textarea id="description" name="description" rows="8" placeholder="Enter course description, objectives, syllabus overview..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <a href="{{ url_for('admin.courses') }}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Add Course</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

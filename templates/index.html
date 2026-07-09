@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}CertifyPro — AI Certificate System{% endblock %}
+{% block content %}
+<section class="hero">
+    <div class="hero-content fade-in">
+        <div class="hero-badge">AI-Powered</div>
+        <h1 class="hero-title">Certificate <span>Generation</span> & <span>Verification</span></h1>
+        <p class="hero-subtitle">Generate professional certificates with AI-driven performance predictions, QR verification, and tamper-proof security.</p>
+        <div class="hero-actions">
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-rocket"></i> Get Started
+            </a>
+            <a href="{{ url_for('main.verify') }}" class="btn btn-secondary btn-lg">
+                <i class="fas fa-search"></i> Verify Certificate
+            </a>
+        </div>
+    </div>
+    <div class="hero-visual fade-in">
+        <div class="mockup-card glass">
+            <i class="fas fa-certificate"></i>
+            <div class="mockup-line"></div>
+            <div class="mockup-line short"></div>
+            <div class="mockup-badge">VALID</div>
+        </div>
+    </div>
+</section>
+
+<section class="features">
+    <h2 class="section-title">Why Choose CertifyPro</h2>
+    <div class="features-grid">
+        <div class="feature-card glass fade-in">
+            <div class="feature-icon"><i class="fas fa-robot"></i></div>
+            <h3>AI Predictions</h3>
+            <p>ML models predict student performance, grades, and pass/fail with confidence scores.</p>
+        </div>
+        <div class="feature-card glass fade-in">
+            <div class="feature-icon"><i class="fas fa-file-pdf"></i></div>
+            <h3>Auto-Generate PDF</h3>
+            <p>Professional certificate PDFs with QR codes and digital signatures, auto-generated.</p>
+        </div>
+        <div class="feature-card glass fade-in">
+            <div class="feature-icon"><i class="fas fa-qrcode"></i></div>
+            <h3>QR Verification</h3>
+            <p>Instant verification via Certificate ID or QR code scan. Tamper-proof.</p>
+        </div>
+    </div>
+</section>
+
+<section class="stats glass fade-in">
+    <div class="stat"><span class="stat-number" data-target="1000">0</span><p>Certificates Issued</p></div>
+    <div class="stat"><span class="stat-number" data-target="500">0</span><p>Students Enrolled</p></div>
+    <div class="stat"><span class="stat-number" data-target="50">0</span><p>Courses Offered</p></div>
+    <div class="stat"><span class="stat-number" data-target="99">0</span><p>% Satisfaction</p></div>
+</section>
+{% endblock %}

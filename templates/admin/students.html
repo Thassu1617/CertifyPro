@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Students — CertifyPro{% endblock %}
+{% block content %}
+<div class="admin-layout">
+    <aside class="admin-sidebar glass">{% include "admin/_sidebar.html" %}</aside>
+    <div class="admin-main">
+        {% include "admin/_topbar.html" %}
+        <div class="admin-content">
+            <div class="page-header">
+                <h1><i class="fas fa-user-graduate"></i> Students</h1>
+                <a href="{{ url_for('admin.add_student') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add Student
+                </a>
+            </div>
+
+            <div class="glass table-card fade-in">
+                <div class="table-toolbar">
+                    <form method="GET" action="{{ url_for('admin.students') }}" class="search-form">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" name="q" class="search-input" placeholder="Search by name, ID, email, or department..." value="{{ query }}">
+                        <button type="submit" class="btn btn-primary btn-sm">Search</button>
+                        {% if query %}
+                        <a href="{{ url_for('admin.students') }}" class="btn btn-secondary btn-sm">Clear</a>
+                        {% endif %}
+                    </form>
+                    <span class="table-count">{{ start_idx }}-{{ end_idx }} of {{ total }} students</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="width:50px">Photo</th>
+                                <th>Student ID</th>
+                                <th>Full Name</th>
+                                <th>Email</th>
+                                <th>Department</th>
+                                <th>Semester</th>
+                                <th>Phone</th>
+                                <th style="width:160px">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in students %}
+                            <tr>
+                                <td class="td-photo">
+                                    {% if s.profile_image %}
+                                    <img src="{{ url_for('static', filename=s.profile_image) }}" alt="photo" class="student-avatar-sm">
+                                    {% else %}
+                                    <div class="student-avatar-sm avatar-placeholder"><i class="fas fa-user"></i></div>
+                                    {% endif %}
+                                </td>
+                                <td><code>{{ s.student_id }}</code></td>
+                                <td><strong>{{ s.user.full_name }}</strong></td>
+                                <td>{{ s.user.email }}</td>
+                                <td>{{ s.department or '-' }}</td>
+                                <td><span class="badge semester-badge">{{ s.semester or '-' }}</span></td>
+                                <td>{{ s.phone or '-' }}</td>
+                                <td class="actions-cell">
+                                    <a href="{{ url_for('admin.view_student', id=s.id) }}" class="btn-icon view" title="View"><i class="fas fa-eye"></i></a>
+                                    <a href="{{ url_for('admin.edit_student', id=s.id) }}" class="btn-icon edit" title="Edit"><i class="fas fa-edit"></i></a>
+                                    <form method="POST" action="{{ url_for('admin.delete_student', id=s.id) }}" style="display:inline" onsubmit="return confirm('Delete student \'{{ s.user.full_name }}\'? This action cannot be undone.')">
+                                        <button type="submit" class="btn-icon delete" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="8" class="empty-state-td">
+                                    <div class="empty-state">
+                                        <i class="fas fa-user-graduate empty-icon"></i>
+                                        <h3>{% if query %}No students matching "{{ query }}"{% else %}No students yet{% endif %}</h3>
+                                        <p>{% if query %}Try a different search term{% else %}Click "Add Student" to get started{% endif %}</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if total_pages > 1 %}
+                <div class="pagination">
+                    <span class="page-info">Page {{ page }} of {{ total_pages }}</span>
+                    <div class="page-buttons">
+                        {% if page > 1 %}
+                        <a href="{{ url_for('admin.students', page=page-1, q=query) }}" class="page-btn"><i class="fas fa-chevron-left"></i></a>
+                        {% endif %}
+                        {% for p in range(1, total_pages + 1) %}
+                            {% if p == page %}
+                            <span class="page-btn active">{{ p }}</span>
+                            {% elif p <= 3 or p > total_pages - 2 or (p >= page - 1 and p <= page + 1) %}
+                            <a href="{{ url_for('admin.students', page=p, q=query) }}" class="page-btn">{{ p }}</a>
+                            {% elif p == 4 and page > 5 or p == total_pages - 3 and page < total_pages - 4 %}
+                            <span class="page-dots">...</span>
+                            {% endif %}
+                        {% endfor %}
+                        {% if page < total_pages %}
+                        <a href="{{ url_for('admin.students', page=page+1, q=query) }}" class="page-btn"><i class="fas fa-chevron-right"></i></a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Courses — CertifyPro{% endblock %}
+{% block content %}
+<div class="admin-layout">
+    <aside class="admin-sidebar glass">{% include "admin/_sidebar.html" %}</aside>
+    <div class="admin-main">
+        {% include "admin/_topbar.html" %}
+        <div class="admin-content">
+            <div class="page-header">
+                <h1><i class="fas fa-book"></i> Courses</h1>
+                <a href="{{ url_for('admin.add_course') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add Course
+                </a>
+            </div>
+
+            <div class="glass table-card fade-in">
+                <div class="table-toolbar">
+                    <form method="GET" action="{{ url_for('admin.courses') }}" class="search-form">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" name="q" class="search-input" placeholder="Search by course code or name..." value="{{ query }}">
+                        <button type="submit" class="btn btn-primary btn-sm">Search</button>
+                        {% if query %}
+                        <a href="{{ url_for('admin.courses') }}" class="btn btn-secondary btn-sm">Clear</a>
+                        {% endif %}
+                    </form>
+                    <span class="table-count">{{ start_idx }}-{{ end_idx }} of {{ total }} courses</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Course Code</th>
+                                <th>Course Name</th>
+                                <th>Credits</th>
+                                <th>Enrollments</th>
+                                <th>Created</th>
+                                <th style="width:160px">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for c in courses %}
+                            <tr>
+                                <td><code>{{ c.course_code }}</code></td>
+                                <td><strong>{{ c.course_name }}</strong></td>
+                                <td><span class="badge semester-badge">{{ c.credits }} cr</span></td>
+                                <td>{{ c.enrollments|length }}</td>
+                                <td>{{ c.created_at.strftime('%Y-%m-%d') if c.created_at else '-' }}</td>
+                                <td class="actions-cell">
+                                    <a href="{{ url_for('admin.view_course', id=c.id) }}" class="btn-icon view" title="View"><i class="fas fa-eye"></i></a>
+                                    <a href="{{ url_for('admin.edit_course', id=c.id) }}" class="btn-icon edit" title="Edit"><i class="fas fa-edit"></i></a>
+                                    <form method="POST" action="{{ url_for('admin.delete_course', id=c.id) }}" style="display:inline" onsubmit="return confirm('Delete course \'{{ c.course_name }}\'? This will also remove all enrollments.')">
+                                        <button type="submit" class="btn-icon delete" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="empty-state-td">
+                                    <div class="empty-state">
+                                        <i class="fas fa-book empty-icon"></i>
+                                        <h3>{% if query %}No courses matching "{{ query }}"{% else %}No courses yet{% endif %}</h3>
+                                        <p>{% if query %}Try a different search term{% else %}Click "Add Course" to get started{% endif %}</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if total_pages > 1 %}
+                <div class="pagination">
+                    <span class="page-info">Page {{ page }} of {{ total_pages }}</span>
+                    <div class="page-buttons">
+                        {% if page > 1 %}
+                        <a href="{{ url_for('admin.courses', page=page-1, q=query) }}" class="page-btn"><i class="fas fa-chevron-left"></i></a>
+                        {% endif %}
+                        {% for p in range(1, total_pages + 1) %}
+                            {% if p == page %}
+                            <span class="page-btn active">{{ p }}</span>
+                            {% elif p <= 3 or p > total_pages - 2 or (p >= page - 1 and p <= page + 1) %}
+                            <a href="{{ url_for('admin.courses', page=p, q=query) }}" class="page-btn">{{ p }}</a>
+                            {% elif p == 4 and page > 5 or p == total_pages - 3 and page < total_pages - 4 %}
+                            <span class="page-dots">...</span>
+                            {% endif %}
+                        {% endfor %}
+                        {% if page < total_pages %}
+                        <a href="{{ url_for('admin.courses', page=page+1, q=query) }}" class="page-btn"><i class="fas fa-chevron-right"></i></a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
