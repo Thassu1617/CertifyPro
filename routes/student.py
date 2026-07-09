@@ -285,7 +285,6 @@ def submit_exam(exam_id):
                     total_marks=total_marks,
                     cert_id=cert_id,
                     issue_date=datetime.utcnow(),
-                    issued_by="CertifyPro System",
                 )
                 rel_pdf = f"certificates_output/{cert_id}/certificate.pdf"
                 rel_qr = f"certificates_output/{cert_id}/qr.png"
