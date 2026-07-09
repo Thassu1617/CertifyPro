@@ -197,16 +197,8 @@ function hideConfirmDialog() {
 function submitExam() {
     document.getElementById('confirmOverlay').classList.remove('show');
     document.getElementById('timeoutOverlay').classList.remove('show');
-    window.removeEventListener('beforeunload', beforeUnloadHandler);
     document.getElementById('examForm').submit();
 }
-
-function beforeUnloadHandler(e) {
-    e.preventDefault();
-    e.returnValue = '';
-}
-
-window.addEventListener('beforeunload', beforeUnloadHandler);
 
 // ---- Countdown Timer ----
 (function() {
@@ -243,11 +235,6 @@ window.addEventListener('beforeunload', beforeUnloadHandler);
     }
     updateTimer();
 })();
-
-window.addEventListener('beforeunload', function(e) {
-    e.preventDefault();
-    e.returnValue = '';
-});
 
 updateUI();
 </script>

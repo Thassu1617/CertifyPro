@@ -51,7 +51,30 @@ def courses():
     if not student:
         flash("Student profile not found.", "error")
         return redirect(url_for("main.index"))
-    return render_template("student/courses.html", student=student, enrollments=student.enrollments)
+    all_courses = Course.query.order_by(Course.course_name).all()
+    enrolled_ids = {e.course_id for e in student.enrollments}
+    return render_template("student/courses.html", student=student, enrollments=student.enrollments, all_courses=all_courses, enrolled_ids=enrolled_ids)
+
+
+@student_bp.route("/courses/enroll/<int:course_id>", methods=["POST"])
+@login_required
+def enroll_course(course_id):
+    student = current_user.student
+    if not student:
+        flash("Student profile not found.", "error")
+        return redirect(url_for("main.index"))
+
+    course = Course.query.get_or_404(course_id)
+    existing = Enrollment.query.filter_by(student_id=student.id, course_id=course_id).first()
+    if existing:
+        flash("Already enrolled in this course.", "info")
+    else:
+        enrollment = Enrollment(student_id=student.id, course_id=course_id, status="active")
+        db.session.add(enrollment)
+        db.session.commit()
+        flash(f"Successfully enrolled in {course.course_name}!", "success")
+
+    return redirect(url_for("student.courses"))
 
 
 @student_bp.route("/courses/review/<int:course_id>")

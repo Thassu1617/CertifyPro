@@ -27,15 +27,36 @@ def _load_models():
             pass
 
 
+def _rule_based_prediction(percentage, marks_obtained=None, total_marks=None):
+    if marks_obtained is not None and total_marks and total_marks > 0:
+        percentage = (marks_obtained / total_marks) * 100
+    if percentage >= 85:
+        grade = "A"
+        perf = "Excellent"
+    elif percentage >= 70:
+        grade = "B"
+        perf = "Good"
+    elif percentage >= 55:
+        grade = "C"
+        perf = "Average"
+    elif percentage >= 40:
+        grade = "D"
+        perf = "Needs Improvement"
+    else:
+        grade = "F"
+        perf = "Poor"
+    return {
+        "predicted_pass": "Pass" if percentage >= 40 else "Fail",
+        "predicted_grade": grade,
+        "predicted_performance": perf,
+        "confidence_score": round(min(percentage / 100, 0.98), 2),
+    }
+
+
 def predict(percentage, attendance, quiz_scores=None, assignment_scores=None, exam_marks=None):
     _load_models()
     if _clf_pf is None:
-        return {
-            "predicted_pass": "N/A",
-            "predicted_grade": "N/A",
-            "predicted_performance": "N/A",
-            "confidence_score": 0.0,
-        }
+        return _rule_based_prediction(percentage, marks_obtained=exam_marks, total_marks=100)
     if attendance is None:
         attendance = min(percentage * 0.9, 100)
     if quiz_scores is None:

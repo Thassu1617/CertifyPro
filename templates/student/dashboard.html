@@ -139,7 +139,7 @@
                         <strong>{{ c.course.course_name }}</strong>
                         <br><small>Grade: {{ c.grade }} · {{ c.completion_date.strftime('%b %d, %Y') if c.completion_date else '' }}</small>
                     </div>
-                    <a href="{{ url_for('admin.download_certificate', id=c.id) }}" class="btn-icon edit" title="Download"><i class="fas fa-download"></i></a>
+                    <a href="{{ url_for('student.download_certificate', cert_id=c.id) }}" class="btn-icon edit" title="Download"><i class="fas fa-download"></i></a>
                 </div>
                 {% else %}
                 <div class="sd-empty"><i class="fas fa-certificate"></i><p>No certificates issued yet</p></div>

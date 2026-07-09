@@ -567,9 +567,10 @@ body.light-mode .auth-card { background: rgba(255,255,255,0.85); box-shadow: 0 8
 .sd-hero:hover { box-shadow: var(--shadow); }
 .sd-hero-avatar img, .sd-avatar-placeholder { width: 72px; height: 72px; border-radius: 18px; object-fit: cover; }
 .sd-avatar-placeholder { background: linear-gradient(135deg, var(--primary), var(--accent)); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 2rem; }
-.sd-hero-info h1 { font-size: 1.45rem; font-weight: 700; }
+.sd-hero-info { min-width: 0; overflow-wrap: break-word; word-break: break-word; }
+.sd-hero-info h1 { font-size: 1.45rem; font-weight: 700; overflow-wrap: break-word; word-break: break-word; }
 .sd-hero-meta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
-.sd-hero-meta span { font-size: 0.82rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+.sd-hero-meta span { font-size: 0.82rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px; overflow-wrap: break-word; word-break: break-word; }
 .sd-hero-meta code { background: var(--surface); padding: 1px 6px; border-radius: 4px; }
 
 .sd-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
