@@ -53,7 +53,8 @@ def courses():
         return redirect(url_for("main.index"))
     all_courses = Course.query.order_by(Course.course_name).all()
     enrolled_ids = {e.course_id for e in student.enrollments}
-    return render_template("student/courses.html", student=student, enrollments=student.enrollments, all_courses=all_courses, enrolled_ids=enrolled_ids)
+    available_courses = [c for c in all_courses if c.id not in enrolled_ids]
+    return render_template("student/courses.html", student=student, enrollments=student.enrollments, available_courses=available_courses, enrolled_courses=enrolled_ids)
 
 
 @student_bp.route("/courses/enroll/<int:course_id>", methods=["POST"])
@@ -329,7 +330,22 @@ def exam_result(exam_id):
     answers = StudentAnswer.query.filter_by(student_id=student.id, exam_id=exam_id).order_by(StudentAnswer.question_id).all()
     questions = Question.query.filter_by(exam_id=exam_id).order_by(Question.id).all()
 
+    from services.exam_predictor import predict as ml_predict
+    fresh = ml_predict(
+        percentage=result.percentage,
+        attendance=0,
+        quiz_scores=0,
+        assignment_scores=0,
+        exam_marks=result.score,
+    )
     prediction = Prediction.query.filter_by(student_id=student.id, course_id=exam.course_id).order_by(Prediction.created_at.desc()).first()
+    if prediction and (prediction.predicted_grade != fresh["predicted_grade"] or prediction.predicted_performance != fresh["predicted_performance"]):
+        prediction.predicted_pass = fresh["predicted_pass"]
+        prediction.predicted_grade = fresh["predicted_grade"]
+        prediction.predicted_performance = fresh["predicted_performance"]
+        prediction.confidence_score = fresh["confidence_score"]
+        db.session.commit()
+        prediction = Prediction.query.get(prediction.id)
 
     certificate = Certificate.query.filter_by(student_id=student.id, course_id=exam.course_id).first()
 

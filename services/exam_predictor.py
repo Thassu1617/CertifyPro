@@ -54,33 +54,4 @@ def _rule_based_prediction(percentage, marks_obtained=None, total_marks=None):
 
 
 def predict(percentage, attendance, quiz_scores=None, assignment_scores=None, exam_marks=None):
-    _load_models()
-    if _clf_pf is None:
-        return _rule_based_prediction(percentage, marks_obtained=exam_marks, total_marks=100)
-    if attendance is None:
-        attendance = min(percentage * 0.9, 100)
-    if quiz_scores is None:
-        quiz_scores = min(percentage * 0.85, 100)
-    if assignment_scores is None:
-        assignment_scores = min(percentage * 0.8, 100)
-    if exam_marks is None:
-        exam_marks = percentage
-    features = np.array([[percentage, attendance, quiz_scores, assignment_scores, exam_marks]])
-    features_scaled = _scaler.transform(features)
-
-    pf_pred = _clf_pf.predict(features_scaled)[0]
-    gr_pred = _clf_gr.predict(features_scaled)[0]
-    pr_pred = _clf_pr.predict(features_scaled)[0]
-
-    pf_proba = np.max(_clf_pf.predict_proba(features_scaled)[0])
-    gr_proba = np.max(_clf_gr.predict_proba(features_scaled)[0])
-    pr_proba = np.max(_clf_pr.predict_proba(features_scaled)[0])
-
-    confidence = float(np.mean([pf_proba, gr_proba, pr_proba]))
-
-    return {
-        "predicted_pass": str(pf_pred),
-        "predicted_grade": str(gr_pred),
-        "predicted_performance": str(pr_pred),
-        "confidence_score": round(confidence, 4),
-    }
+    return _rule_based_prediction(percentage, marks_obtained=exam_marks, total_marks=100)
