@@ -28,7 +28,7 @@ def _load_models():
 
 
 def _rule_based_prediction(percentage, marks_obtained=None, total_marks=None):
-    if marks_obtained is not None and total_marks and total_marks > 0:
+    if percentage is None and marks_obtained is not None and total_marks and total_marks > 0:
         percentage = (marks_obtained / total_marks) * 100
     if percentage >= 85:
         grade = "A"

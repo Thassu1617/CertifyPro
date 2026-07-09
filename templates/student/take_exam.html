@@ -137,7 +137,14 @@
             <button class="btn btn-primary" onclick="submitExam()"><i class="fas fa-check"></i> View Results</button>
         </div>
     </div>
+
+    <div class="loading-overlay" id="submitLoader">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Submitting exam...</p>
+    </div>
 </div>
+
+<div class="toast-container" id="toastContainer"></div>
 
 <script>
 let currentQuestion = 0;
@@ -197,7 +204,46 @@ function hideConfirmDialog() {
 function submitExam() {
     document.getElementById('confirmOverlay').classList.remove('show');
     document.getElementById('timeoutOverlay').classList.remove('show');
-    document.getElementById('examForm').submit();
+    const form = document.getElementById('examForm');
+    const loader = document.getElementById('submitLoader');
+    const btn = document.querySelector('#timeoutOverlay .btn-primary, .confirm-actions .btn-primary');
+    if (btn) btn.disabled = true;
+    loader.classList.add('active');
+
+    fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+    })
+    .then(res => {
+        if (res.redirected) {
+            window.location.href = res.url;
+            return;
+        }
+        return res.json().then(data => {
+            if (data.error) {
+                showToast(data.error, 'error');
+            } else {
+                showToast('Submitted successfully!', 'success');
+            }
+            loader.classList.remove('active');
+            if (btn) btn.disabled = false;
+        });
+    })
+    .catch(() => {
+        loader.classList.remove('active');
+        if (btn) btn.disabled = false;
+        showToast('Submission failed. Please try again.', 'error');
+    });
+}
+
+function showToast(msg, type) {
+    const c = document.getElementById('toastContainer');
+    if (!c) return;
+    const t = document.createElement('div');
+    t.className = 'toast toast-' + type;
+    t.innerHTML = '<i class="fas ' + (type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle') + '"></i> ' + msg + '<button class="toast-close" onclick="this.parentElement.remove()">&times;</button>';
+    c.appendChild(t);
+    setTimeout(() => { t.classList.add('removing'); setTimeout(() => t.remove(), 300); }, 4000);
 }
 
 // ---- Countdown Timer ----
