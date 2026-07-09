@@ -6,11 +6,39 @@ from functools import wraps
 from werkzeug.security import generate_password_hash
 from werkzeug.utils import secure_filename
 from app import db
-from database.models import Student, Course, Certificate, Prediction, Marks, User, Enrollment
+from database.models import Student, Course, Certificate, Prediction, Marks, User, Enrollment, Exam, Question, StudentAnswer, ExamResult
 from config import Config
 from services.predictor import predict as ml_predict
 
 admin_bp = Blueprint("admin", __name__)
+
+
+@admin_bp.route("/login", methods=["GET", "POST"])
+def admin_login():
+    from flask_login import login_user
+    from werkzeug.security import check_password_hash
+    if current_user.is_authenticated:
+        if current_user.role == "admin":
+            return redirect(url_for("admin.dashboard"))
+        flash("Admin access required.", "error")
+        return redirect(url_for("auth.login"))
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
+        if not username or not password:
+            flash("Please enter both username and password.", "error")
+            return render_template("admin/admin_login.html")
+        user = User.query.filter_by(username=username).first()
+        if not user or not check_password_hash(user.password_hash, password):
+            flash("Invalid credentials.", "error")
+            return render_template("admin/admin_login.html")
+        if user.role != "admin":
+            flash("Access denied. Admin credentials required.", "error")
+            return render_template("admin/admin_login.html")
+        login_user(user)
+        flash(f"Welcome back, {user.full_name}!", "success")
+        return redirect(url_for("admin.dashboard"))
+    return render_template("admin/admin_login.html")
 
 
 def admin_required(f):
@@ -58,11 +86,29 @@ def dashboard():
         db.func.strftime("%Y-%m", Certificate.created_at)
     ).all()
 
+    # Prediction statistics
+    total_preds = Prediction.query.count()
+    passed_count = Prediction.query.filter(Prediction.predicted_pass == "Pass").count()
+    failed_count = Prediction.query.filter(Prediction.predicted_pass == "Fail").count()
+
+    pred_grade_dist = db.session.query(
+        Prediction.predicted_grade, db.func.count(Prediction.id)
+    ).group_by(Prediction.predicted_grade).all()
+
+    pred_perf_dist = db.session.query(
+        Prediction.predicted_performance, db.func.count(Prediction.id)
+    ).group_by(Prediction.predicted_performance).all()
+
+    avg_confidence = db.session.query(db.func.avg(Prediction.confidence_score)).scalar() or 0
+
     stats = {
         "students": total_students,
         "certificates": total_certificates,
         "courses": total_courses,
         "predictions": total_predictions,
+        "passed": passed_count,
+        "failed": failed_count,
+        "avg_confidence": round(float(avg_confidence) * 100, 1),
     }
 
     return render_template(
@@ -72,6 +118,8 @@ def dashboard():
         recent_preds=recent_preds,
         grade_data=dict(grade_data),
         monthly_certs=[{"month": m, "count": c} for m, c in monthly_certs],
+        pred_grade_data=dict(pred_grade_dist),
+        pred_perf_data=dict(pred_perf_dist),
     )
 
 
@@ -247,10 +295,29 @@ def view_student(id):
     marks = student.marks
     certificates = student.certificates
     predictions = student.predictions
+    exam_results_data = []
+    for e in enrollments:
+        course_exams = Exam.query.filter_by(course_id=e.course_id).all()
+        for exam in course_exams:
+            result = ExamResult.query.filter_by(student_id=student.id, exam_id=exam.id).first()
+            if result:
+                passed_exam = result.passed
+            else:
+                passed_exam = None
+            cert = Certificate.query.filter_by(student_id=student.id, course_id=e.course_id).first()
+            exam_results_data.append({
+                "course": e.course,
+                "exam": exam,
+                "result": result,
+                "qualified_for_cert": bool(result and result.passed and not cert),
+                "cert_issued": bool(cert),
+                "cert_id": cert.cert_id if cert else None,
+            })
     return render_template(
         "admin/view_student.html", student=student,
         enrollments=enrollments, marks=marks,
         certificates=certificates, predictions=predictions,
+        exam_results_data=exam_results_data,
     )
 
 
@@ -630,6 +697,12 @@ def predictions():
     start_idx = (page - 1) * per_page + 1 if total > 0 else 0
     end_idx = min(page * per_page, total)
 
+    # Summary stats
+    passed_count = Prediction.query.filter(Prediction.predicted_pass == "Pass").count()
+    failed_count = Prediction.query.filter(Prediction.predicted_pass == "Fail").count()
+    total_preds = Prediction.query.count()
+    avg_conf = db.session.query(db.func.avg(Prediction.confidence_score)).scalar() or 0
+
     return render_template(
         "admin/predictions.html",
         predictions=preds_page.items,
@@ -639,6 +712,10 @@ def predictions():
         total=total,
         start_idx=start_idx,
         end_idx=end_idx,
+        passed_count=passed_count,
+        failed_count=failed_count,
+        total_preds=total_preds,
+        avg_conf=round(float(avg_conf) * 100, 1),
     )
 
 
@@ -799,3 +876,347 @@ def revoke_certificate(id):
     status = "revoked" if not cert.is_valid else "reinstated"
     flash(f"Certificate {cert.cert_id} {status}.", "success")
     return redirect(url_for("admin.view_certificate", id=cert.id))
+
+
+# ─── Exam Management ──────────────────────────────────────────────────────────
+
+@admin_bp.route("/exams")
+@login_required
+def exams():
+    page = request.args.get("page", 1, type=int)
+    per_page = 10
+    query = request.args.get("q", "").strip()
+
+    base_query = Exam.query.join(Course)
+
+    if query:
+        base_query = base_query.filter(
+            Exam.title.contains(query)
+            | Course.course_code.contains(query)
+            | Course.course_name.contains(query)
+        )
+
+    total = base_query.count()
+    exams_page = base_query.order_by(Exam.created_at.desc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    total_pages = max(1, (total + per_page - 1) // per_page)
+    start_idx = (page - 1) * per_page + 1 if total > 0 else 0
+    end_idx = min(page * per_page, total)
+
+    return render_template(
+        "admin/exams.html",
+        exams=exams_page.items,
+        query=query,
+        page=page,
+        total_pages=total_pages,
+        total=total,
+        start_idx=start_idx,
+        end_idx=end_idx,
+    )
+
+
+@admin_bp.route("/exams/add", methods=["GET", "POST"])
+@login_required
+def add_exam():
+    courses = Course.query.order_by(Course.course_name).all()
+
+    if request.method == "POST":
+        title = request.form.get("title", "").strip()
+        course_id = request.form.get("course_id", type=int)
+        duration = request.form.get("duration_minutes", 60, type=int)
+        total_qs = request.form.get("total_questions", 0, type=int)
+        passing_pct = request.form.get("passing_percentage", 40, type=float)
+        max_marks = request.form.get("max_marks", 100, type=float)
+
+        errors = []
+        if not title:
+            errors.append("Exam title is required.")
+        if not course_id or not Course.query.get(course_id):
+            errors.append("Valid course is required.")
+        if duration < 1:
+            errors.append("Duration must be at least 1 minute.")
+        if total_qs < 1:
+            errors.append("Total questions must be at least 1.")
+        if passing_pct < 0 or passing_pct > 100:
+            errors.append("Passing percentage must be between 0 and 100.")
+        if max_marks <= 0:
+            errors.append("Maximum marks must be greater than 0.")
+
+        if errors:
+            for e in errors:
+                flash(e, "error")
+            return render_template("admin/add_exam.html", courses=courses)
+
+        try:
+            exam = Exam(
+                title=title,
+                course_id=course_id,
+                duration_minutes=duration,
+                total_questions=total_qs,
+                passing_percentage=passing_pct,
+                max_marks=max_marks,
+            )
+            db.session.add(exam)
+            db.session.commit()
+            flash(f"Exam '{title}' created successfully!", "success")
+            return redirect(url_for("admin.exams"))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error creating exam: {str(e)}", "error")
+
+    return render_template("admin/add_exam.html", courses=courses)
+
+
+@admin_bp.route("/exams/edit/<int:id>", methods=["GET", "POST"])
+@login_required
+def edit_exam(id):
+    exam = Exam.query.get_or_404(id)
+    courses = Course.query.order_by(Course.course_name).all()
+
+    if request.method == "POST":
+        title = request.form.get("title", "").strip()
+        course_id = request.form.get("course_id", type=int)
+        duration = request.form.get("duration_minutes", 60, type=int)
+        total_qs = request.form.get("total_questions", 0, type=int)
+        passing_pct = request.form.get("passing_percentage", 40, type=float)
+        max_marks = request.form.get("max_marks", 100, type=float)
+
+        if not title:
+            flash("Exam title is required.", "error")
+            return render_template("admin/edit_exam.html", exam=exam, courses=courses)
+
+        exam.title = title
+        exam.course_id = course_id
+        exam.duration_minutes = duration
+        exam.total_questions = total_qs
+        exam.passing_percentage = passing_pct
+        exam.max_marks = max_marks
+        db.session.commit()
+        flash(f"Exam '{title}' updated successfully!", "success")
+        return redirect(url_for("admin.exams"))
+
+    return render_template("admin/edit_exam.html", exam=exam, courses=courses)
+
+
+@admin_bp.route("/exams/delete/<int:id>", methods=["POST"])
+@login_required
+def delete_exam(id):
+    exam = Exam.query.get_or_404(id)
+    name = exam.title
+    db.session.delete(exam)
+    db.session.commit()
+    flash(f"Exam '{name}' deleted successfully.", "success")
+    return redirect(url_for("admin.exams"))
+
+
+@admin_bp.route("/exams/publish/<int:id>", methods=["POST"])
+@login_required
+def toggle_publish_exam(id):
+    exam = Exam.query.get_or_404(id)
+    exam.is_published = not exam.is_published
+    db.session.commit()
+    status = "published" if exam.is_published else "unpublished"
+    flash(f"Exam '{exam.title}' {status}.", "success")
+    return redirect(url_for("admin.exams"))
+
+
+# ─── Question Management ───────────────────────────────────────────────────────
+
+@admin_bp.route("/exams/questions/<int:exam_id>")
+@login_required
+def exam_questions(exam_id):
+    exam = Exam.query.get_or_404(exam_id)
+    questions = Question.query.filter_by(exam_id=exam_id).order_by(Question.id).all()
+    return render_template("admin/exam_questions.html", exam=exam, questions=questions)
+
+
+@admin_bp.route("/exams/questions/add/<int:exam_id>", methods=["GET", "POST"])
+@login_required
+def add_question(exam_id):
+    exam = Exam.query.get_or_404(exam_id)
+
+    if request.method == "POST":
+        question_text = request.form.get("question_text", "").strip()
+        option_a = request.form.get("option_a", "").strip()
+        option_b = request.form.get("option_b", "").strip()
+        option_c = request.form.get("option_c", "").strip()
+        option_d = request.form.get("option_d", "").strip()
+        correct_answer = request.form.get("correct_answer", "").strip().upper()
+        marks = request.form.get("marks", 1, type=float)
+
+        errors = []
+        if not question_text:
+            errors.append("Question text is required.")
+        if not all([option_a, option_b, option_c, option_d]):
+            errors.append("All four options are required.")
+        if correct_answer not in ("A", "B", "C", "D"):
+            errors.append("Correct answer must be A, B, C, or D.")
+        if marks <= 0:
+            errors.append("Marks must be greater than 0.")
+
+        if errors:
+            for e in errors:
+                flash(e, "error")
+            return render_template("admin/add_question.html", exam=exam)
+
+        try:
+            question = Question(
+                exam_id=exam_id,
+                question_text=question_text,
+                option_a=option_a,
+                option_b=option_b,
+                option_c=option_c,
+                option_d=option_d,
+                correct_answer=correct_answer,
+                marks=marks,
+            )
+            db.session.add(question)
+
+            q_count = Question.query.filter_by(exam_id=exam_id).count()
+            exam.total_questions = q_count + 1
+
+            db.session.commit()
+            flash("Question added successfully!", "success")
+            return redirect(url_for("admin.exam_questions", exam_id=exam_id))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error adding question: {str(e)}", "error")
+
+    return render_template("admin/add_question.html", exam=exam)
+
+
+@admin_bp.route("/exams/questions/edit/<int:id>", methods=["GET", "POST"])
+@login_required
+def edit_question(id):
+    question = Question.query.get_or_404(id)
+
+    if request.method == "POST":
+        question_text = request.form.get("question_text", "").strip()
+        option_a = request.form.get("option_a", "").strip()
+        option_b = request.form.get("option_b", "").strip()
+        option_c = request.form.get("option_c", "").strip()
+        option_d = request.form.get("option_d", "").strip()
+        correct_answer = request.form.get("correct_answer", "").strip().upper()
+        marks = request.form.get("marks", 1, type=float)
+
+        errors = []
+        if not question_text:
+            errors.append("Question text is required.")
+        if not all([option_a, option_b, option_c, option_d]):
+            errors.append("All four options are required.")
+        if correct_answer not in ("A", "B", "C", "D"):
+            errors.append("Correct answer must be A, B, C, or D.")
+        if marks <= 0:
+            errors.append("Marks must be greater than 0.")
+
+        if errors:
+            for e in errors:
+                flash(e, "error")
+            return render_template("admin/edit_question.html", question=question)
+
+        question.question_text = question_text
+        question.option_a = option_a
+        question.option_b = option_b
+        question.option_c = option_c
+        question.option_d = option_d
+        question.correct_answer = correct_answer
+        question.marks = marks
+        db.session.commit()
+        flash("Question updated successfully!", "success")
+        return redirect(url_for("admin.exam_questions", exam_id=question.exam_id))
+
+    return render_template("admin/edit_question.html", question=question)
+
+
+@admin_bp.route("/exams/questions/delete/<int:id>", methods=["POST"])
+@login_required
+def delete_question(id):
+    question = Question.query.get_or_404(id)
+    exam_id = question.exam_id
+    db.session.delete(question)
+    exam = Exam.query.get(exam_id)
+    if exam:
+        exam.total_questions = Question.query.filter_by(exam_id=exam_id).count() - 1
+    db.session.commit()
+    flash("Question deleted successfully.", "success")
+    return redirect(url_for("admin.exam_questions", exam_id=exam_id))
+
+
+@admin_bp.route("/exams/questions/bulk-add/<int:exam_id>", methods=["POST"])
+@login_required
+def bulk_add_questions(exam_id):
+    exam = Exam.query.get_or_404(exam_id)
+    bulk_text = request.form.get("bulk_questions", "").strip()
+
+    if not bulk_text:
+        flash("No question data provided.", "error")
+        return redirect(url_for("admin.exam_questions", exam_id=exam_id))
+
+    lines = [l.strip() for l in bulk_text.split("\n") if l.strip()]
+    added = 0
+
+    current_q = {}
+    for line in lines:
+        if line.upper().startswith("Q:"):
+            if current_q and current_q.get("text") and all(k in current_q for k in ("a", "b", "c", "d", "ans")):
+                try:
+                    q = Question(
+                        exam_id=exam_id,
+                        question_text=current_q["text"],
+                        option_a=current_q["a"],
+                        option_b=current_q["b"],
+                        option_c=current_q["c"],
+                        option_d=current_q["d"],
+                        correct_answer=current_q["ans"],
+                        marks=current_q.get("marks", 1),
+                    )
+                    db.session.add(q)
+                    added += 1
+                except Exception:
+                    pass
+            current_q = {"marks": 1}
+            current_q["text"] = line[2:].strip()
+        elif line.upper().startswith("A:") and "text" not in current_q:
+            current_q["a"] = line[2:].strip()
+        elif line.upper().startswith("B:") and "text" not in current_q:
+            current_q["b"] = line[2:].strip()
+        elif line.upper().startswith("C:"):
+            current_q["c"] = line[2:].strip()
+        elif line.upper().startswith("D:"):
+            current_q["d"] = line[2:].strip()
+        elif line.upper().startswith("ANS:"):
+            ans = line[4:].strip().upper()
+            if ans in ("A", "B", "C", "D"):
+                current_q["ans"] = ans
+        elif line.upper().startswith("MARKS:"):
+            try:
+                current_q["marks"] = float(line[6:].strip())
+            except ValueError:
+                pass
+
+    if current_q.get("text") and all(k in current_q for k in ("a", "b", "c", "d", "ans")):
+        try:
+            q = Question(
+                exam_id=exam_id,
+                question_text=current_q["text"],
+                option_a=current_q["a"],
+                option_b=current_q["b"],
+                option_c=current_q["c"],
+                option_d=current_q["d"],
+                correct_answer=current_q["ans"],
+                marks=current_q.get("marks", 1),
+            )
+            db.session.add(q)
+            added += 1
+        except Exception:
+            pass
+
+    if added:
+        exam.total_questions = Question.query.filter_by(exam_id=exam_id).count()
+        db.session.commit()
+        flash(f"{added} questions added successfully via bulk upload!", "success")
+    else:
+        flash("No valid questions found. Use format: Q: question, A: option, B: option, C: option, D: option, ANS: A/B/C/D", "error")
+
+    return redirect(url_for("admin.exam_questions", exam_id=exam_id))

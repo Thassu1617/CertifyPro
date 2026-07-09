@@ -112,11 +112,13 @@ def login():
             flash("Incorrect password. Please try again.", "error")
             return render_template("auth/login.html")
 
+        if user.role == "admin":
+            flash("Admin login is restricted. Use the admin portal.", "error")
+            return render_template("auth/login.html")
+
         login_user(user)
         flash(f"Welcome back, {user.full_name}!", "success")
 
-        if user.role == "admin":
-            return redirect(url_for("admin.dashboard"))
         return redirect(url_for("student.dashboard"))
 
     return render_template("auth/login.html")

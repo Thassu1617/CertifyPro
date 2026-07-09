@@ -17,6 +17,37 @@
                 </div>
             </div>
 
+            <div class="stats-grid" style="margin-bottom:20px">
+                <div class="stat-card glass fade-in" style="--card-color: #6c63ff;">
+                    <div class="stat-icon"><i class="fas fa-brain"></i></div>
+                    <div class="stat-body">
+                        <h3>{{ total_preds }}</h3>
+                        <p>Total Predictions</p>
+                    </div>
+                </div>
+                <div class="stat-card glass fade-in" style="--card-color: #00d4aa;">
+                    <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                    <div class="stat-body">
+                        <h3>{{ passed_count }}</h3>
+                        <p>Predicted Pass</p>
+                    </div>
+                </div>
+                <div class="stat-card glass fade-in" style="--card-color: #ff4757;">
+                    <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
+                    <div class="stat-body">
+                        <h3>{{ failed_count }}</h3>
+                        <p>Predicted Fail</p>
+                    </div>
+                </div>
+                <div class="stat-card glass fade-in" style="--card-color: #ff9800;">
+                    <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+                    <div class="stat-body">
+                        <h3>{{ avg_conf }}%</h3>
+                        <p>Avg Confidence</p>
+                    </div>
+                </div>
+            </div>
+
             <div class="glass table-card fade-in">
                 <div class="table-toolbar">
                     <form method="GET" action="{{ url_for('admin.predictions') }}" class="search-form">

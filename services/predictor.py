@@ -13,14 +13,24 @@ _feature_names = None
 def _load_models():
     global _clf_pf, _clf_gr, _clf_pr, _feature_names
     if _clf_pf is None:
-        _clf_pf = joblib.load(os.path.join(model_dir, "model_pass_fail.joblib"))
-        _clf_gr = joblib.load(os.path.join(model_dir, "model_grade.joblib"))
-        _clf_pr = joblib.load(os.path.join(model_dir, "model_performance.joblib"))
-        _feature_names = joblib.load(os.path.join(model_dir, "feature_names.joblib"))
+        try:
+            _clf_pf = joblib.load(os.path.join(model_dir, "model_pass_fail.joblib"))
+            _clf_gr = joblib.load(os.path.join(model_dir, "model_grade.joblib"))
+            _clf_pr = joblib.load(os.path.join(model_dir, "model_performance.joblib"))
+            _feature_names = joblib.load(os.path.join(model_dir, "feature_names.joblib"))
+        except Exception:
+            pass
 
 
 def predict(attendance, assignments, quiz_scores):
     _load_models()
+    if _clf_pf is None:
+        return {
+            "predicted_pass": "N/A",
+            "predicted_grade": "N/A",
+            "predicted_performance": "N/A",
+            "confidence_score": 0.0,
+        }
     internal_marks = attendance + assignments + quiz_scores
     features = np.array([[attendance, assignments, quiz_scores, internal_marks]])
 

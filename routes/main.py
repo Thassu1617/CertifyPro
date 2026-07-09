@@ -1,6 +1,6 @@
 from datetime import datetime
 from flask import Blueprint, render_template, request
-from database.models import Certificate, Student, User, Course
+from database.models import Certificate, User
 
 main_bp = Blueprint("main", __name__)
 

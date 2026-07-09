@@ -1,8 +1,20 @@
 {% extends "base.html" %}
 {% block title %}My Courses — CertifyPro{% endblock %}
 {% block content %}
+<style>
+.course-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;max-width:1280px;margin:0 auto;padding:0 24px }
+.course-card { padding:28px;border-radius:var(--radius);text-decoration:none;color:var(--text);display:flex;flex-direction:column;transition:all var(--transition);cursor:pointer;position:relative;overflow:hidden }
+.course-card:hover { transform:translateY(-4px);box-shadow:var(--shadow);border-color:var(--primary) }
+.course-card .card-icon { font-size:2.5rem;color:var(--primary);margin-bottom:12px }
+.course-card h3 { font-size:1.15rem;margin-bottom:4px }
+.course-card .course-code { font-size:0.82rem;color:var(--text-muted);margin-bottom:12px;display:flex;align-items:center;gap:6px }
+.course-card .course-desc { font-size:0.85rem;color:var(--text-muted);line-height:1.6;flex:1;margin-bottom:16px }
+.course-card .course-meta { display:flex;gap:16px;font-size:0.8rem;color:var(--text-muted);padding-top:12px;border-top:1px solid var(--border) }
+.course-card .course-meta span { display:flex;align-items:center;gap:4px }
+</style>
+
 <div class="student-dashboard">
-    <div class="sd-hero fade-in" style="margin-bottom:0">
+    <div class="sd-hero fade-in" style="margin-bottom:24px">
         <div class="sd-hero-avatar">
             {% if student.profile_image %}
             <img src="{{ url_for('static', filename=student.profile_image) }}" alt="">
@@ -20,63 +32,30 @@
         </div>
     </div>
 
-    <div style="padding:0 24px;max-width:1280px;margin:0 auto">
-        <div class="sd-stats fade-in">
-            <div class="sd-stat-card glass">
-                <div class="sd-stat-icon" style="--card-color:var(--primary)"><i class="fas fa-book-open"></i></div>
-                <div class="sd-stat-body"><h3>{{ enrollments|length }}</h3><p>Enrolled Courses</p></div>
+    <div class="course-grid fade-in">
+        {% for e in enrollments %}
+        {% set exam_count = e.course.exams|length %}
+        {% set result_count = e.course.exams|map(attribute='results')|sum(attribute='count') %}
+        <div class="course-card glass">
+            <div class="card-icon"><i class="fas fa-book-open"></i></div>
+            <h3>{{ e.course.course_name }}</h3>
+            <div class="course-code"><code>{{ e.course.course_code }}</code> · {{ e.course.credits }} credits</div>
+            <div class="course-desc">{{ e.course.description[:150] }}{% if e.course.description|length > 150 %}...{% endif %}</div>
+            <div class="course-meta">
+                <span><i class="fas fa-file-alt"></i> {{ exam_count }} exam{% if exam_count != 1 %}s{% endif %}</span>
+                <span><i class="fas fa-star"></i> {{ e.status|capitalize }}</span>
             </div>
-            <div class="sd-stat-card glass">
-                <div class="sd-stat-icon" style="--card-color:var(--accent)"><i class="fas fa-check-circle"></i></div>
-                <div class="sd-stat-body"><h3>{{ enrollments|selectattr('status','equalto','active')|list|length }}</h3><p>Active</p></div>
-            </div>
-            <div class="sd-stat-card glass">
-                <div class="sd-stat-icon" style="--card-color:var(--primary)"><i class="fas fa-clock"></i></div>
-                <div class="sd-stat-body"><h3>{{ enrollments|rejectattr('status','equalto','active')|list|length }}</h3><p>Completed</p></div>
-            </div>
+            <a href="{{ url_for('student.course_review', course_id=e.course.id) }}" class="btn btn-primary btn-sm" style="margin-top:12px;width:100%;justify-content:center">
+                <i class="fas fa-arrow-right"></i> View Course
+            </a>
         </div>
-    </div>
-
-    <div style="padding:0 24px;max-width:1280px;margin:0 auto" class="fade-in">
-        <div class="sd-card glass">
-            <div class="sd-card-header">
-                <h3><i class="fas fa-list"></i> All Enrolled Courses</h3>
-            </div>
-            <div class="sd-card-body" style="padding:0">
-                <table class="data-table" style="font-size:0.9rem">
-                    <thead>
-                        <tr>
-                            <th>Course Code</th>
-                            <th>Course Name</th>
-                            <th>Credits</th>
-                            <th>Status</th>
-                            <th>Enrolled</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for e in enrollments %}
-                        <tr>
-                            <td><code>{{ e.course.course_code }}</code></td>
-                            <td><strong>{{ e.course.course_name }}</strong></td>
-                            <td>{{ e.course.credits }}</td>
-                            <td><span class="badge {{ 'pass' if e.status == 'active' else 'valid' }}">{{ e.status|capitalize }}</span></td>
-                            <td>{{ e.enrolled_at.strftime('%Y-%m-%d') if e.enrolled_at else '-' }}</td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="5" class="empty-state-td">
-                                <div class="empty-state">
-                                    <i class="fas fa-book-open empty-icon"></i>
-                                    <h3>No courses enrolled</h3>
-                                    <p>Courses will appear here once an admin enrolls you</p>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+        {% else %}
+        <div style="grid-column:1/-1;text-align:center;padding:60px">
+            <i class="fas fa-book-open" style="font-size:3rem;color:var(--text-muted);opacity:0.3;margin-bottom:16px"></i>
+            <h3 style="color:var(--text-muted)">No courses enrolled</h3>
+            <p style="color:var(--text-muted);opacity:0.7">Courses will appear here once an admin enrolls you</p>
         </div>
+        {% endfor %}
     </div>
 </div>
 {% endblock %}

@@ -36,6 +36,13 @@
                         </p>
                     </div>
                 </div>
+                <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+                    <h3 style="font-size:0.9rem;font-weight:600;margin-bottom:8px"><i class="fas fa-key" style="color:var(--primary);margin-right:8px"></i> Login Credentials</h3>
+                    <div style="display:flex;gap:24px;flex-wrap:wrap;font-size:0.85rem;color:var(--text-muted)">
+                        <span><strong>Username:</strong> <code>{{ student.user.username }}</code></span>
+                        <span><strong>Password:</strong> <code>admin123</code> <small style="color:var(--danger)">(change on first login)</small></span>
+                    </div>
+                </div>
                 {% if student.address %}
                 <div class="profile-address">
                     <i class="fas fa-map-marker-alt"></i> {{ student.address }}
@@ -58,7 +65,7 @@
                     <h3><i class="fas fa-certificate"></i> Certificates ({{ certificates|length }})</h3>
                     <div class="profile-list">
                         {% for c in certificates %}
-                        <div class="profile-list-item"><i class="fas fa-award" style="color:#ff9800"></i> {{ c.course.course_name }} — Grade: <strong>{{ c.grade }}</strong></div>
+                        <div class="profile-list-item"><i class="fas fa-award" style="color:#ff9800"></i> {{ c.course.course_name }} — Grade: <strong>{{ c.grade }}</strong> <small><code>{{ c.cert_id }}</code></small></div>
                         {% else %}
                         <div class="profile-empty">No certificates yet</div>
                         {% endfor %}
@@ -86,6 +93,89 @@
                         <div class="profile-empty">No predictions yet</div>
                         {% endfor %}
                     </div>
+                </div>
+            </div>
+
+            <div class="glass chart-card fade-in" style="margin-top:24px">
+                <h3 style="padding:16px 20px;border-bottom:1px solid var(--border)"><i class="fas fa-file-alt" style="color:var(--primary);margin-right:8px"></i> Exam Details</h3>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Course</th>
+                                <th>Exam</th>
+                                <th>Score</th>
+                                <th>Percentage</th>
+                                <th>Status</th>
+                                <th>Qualified for Certificate</th>
+                                <th>Certificate Issued</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in exam_results_data %}
+                            <tr>
+                                <td><code>{{ item.course.course_code }}</code> {{ item.course.course_name }}</td>
+                                <td>{{ item.exam.title }}</td>
+                                <td>
+                                    {% if item.result %}
+                                    {{ "%.1f"|format(item.result.score) }}/{{ "%.0f"|format(item.result.total_marks) }}
+                                    {% else %}
+                                    <span style="color:var(--text-muted)">Not taken</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.result %}
+                                    {{ "%.1f"|format(item.result.percentage) }}%
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.result %}
+                                    <span class="badge {{ 'pass' if item.result.passed else 'fail' }}">
+                                        {{ 'Passed' if item.result.passed else 'Failed' }}
+                                    </span>
+                                    {% else %}
+                                    <span class="badge pending" style="background:rgba(108,99,255,0.15);color:var(--primary)">Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.qualified_for_cert %}
+                                    <span class="badge pass"><i class="fas fa-check"></i> Yes</span>
+                                    {% elif item.result and not item.result.passed %}
+                                    <span class="badge fail"><i class="fas fa-times"></i> No (Failed)</span>
+                                    {% elif item.cert_issued %}
+                                    <span class="badge valid">Already Issued</span>
+                                    {% else %}
+                                    <span class="badge" style="background:rgba(255,152,0,0.15);color:#ff9800">Not taken</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.cert_issued %}
+                                    <span class="badge pass"><i class="fas fa-check-circle"></i> Issued</span>
+                                    <small style="display:block;color:var(--text-muted);font-size:0.75rem"><code>{{ item.cert_id }}</code></small>
+                                    {% elif item.qualified_for_cert %}
+                                    <a href="{{ url_for('admin.generate_certificate') }}?student_id={{ student.id }}&course_id={{ item.course.id }}" class="btn btn-sm btn-primary" style="font-size:0.75rem;padding:4px 10px">
+                                        <i class="fas fa-award"></i> Issue
+                                    </a>
+                                    {% else %}
+                                    <span class="badge fail">Not issued</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="7" class="empty-state-td">
+                                    <div class="empty-state">
+                                        <i class="fas fa-file-alt empty-icon"></i>
+                                        <h3>No exam data</h3>
+                                        <p>No exams are available for this student's enrolled courses.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

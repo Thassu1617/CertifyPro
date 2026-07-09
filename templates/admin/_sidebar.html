@@ -20,6 +20,9 @@
     <a href="{{ url_for('admin.certificates') }}" class="sidebar-link {{ 'active' if request.endpoint == 'admin.certificates' }}">
         <i class="fas fa-certificate"></i> <span>Certificates</span>
     </a>
+    <a href="{{ url_for('admin.exams') }}" class="sidebar-link {{ 'active' if request.endpoint in ['admin.exams', 'admin.add_exam', 'admin.edit_exam', 'admin.exam_questions', 'admin.add_question', 'admin.edit_question'] }}">
+        <i class="fas fa-file-alt"></i> <span>Exams</span>
+    </a>
 </nav>
 <div class="sidebar-footer">
     <a href="{{ url_for('main.index') }}" class="sidebar-link">

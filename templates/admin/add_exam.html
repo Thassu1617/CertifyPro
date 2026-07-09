@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Create Exam — CertifyPro{% endblock %}
+{% block content %}
+<div class="admin-layout">
+    <aside class="admin-sidebar glass">{% include "admin/_sidebar.html" %}</aside>
+    <div class="admin-main">
+        {% include "admin/_topbar.html" %}
+        <div class="admin-content">
+            <div class="page-header">
+                <h1><i class="fas fa-plus-circle"></i> Create Exam</h1>
+                <a href="{{ url_for('admin.exams') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back</a>
+            </div>
+
+            <div class="form-card glass fade-in">
+                <form method="POST" class="admin-form">
+                    <div class="form-columns">
+                        <div class="form-left">
+                            <h3><i class="fas fa-info-circle"></i> Exam Details</h3>
+                            <div class="form-group">
+                                <label for="title"><i class="fas fa-heading"></i> Exam Title <span class="required">*</span></label>
+                                <input type="text" id="title" name="title" placeholder="e.g., Midterm Examination" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="course_id"><i class="fas fa-book"></i> Course <span class="required">*</span></label>
+                                <select id="course_id" name="course_id" required>
+                                    <option value="">Select Course...</option>
+                                    {% for c in courses %}
+                                    <option value="{{ c.id }}">{{ c.course_code }} — {{ c.course_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="duration_minutes"><i class="fas fa-clock"></i> Duration (minutes) <span class="required">*</span></label>
+                                    <input type="number" id="duration_minutes" name="duration_minutes" value="60" min="1" max="480" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="total_questions"><i class="fas fa-list-ol"></i> Total Questions <span class="required">*</span></label>
+                                    <input type="number" id="total_questions" name="total_questions" value="10" min="1" max="200" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-right">
+                            <h3><i class="fas fa-cog"></i> Configuration</h3>
+                            <div class="form-group">
+                                <label for="passing_percentage"><i class="fas fa-check-circle"></i> Passing Percentage <span class="required">*</span></label>
+                                <input type="number" id="passing_percentage" name="passing_percentage" value="40" min="0" max="100" step="0.1" required>
+                                <small class="form-hint">Minimum percentage required to pass</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="max_marks"><i class="fas fa-trophy"></i> Maximum Marks <span class="required">*</span></label>
+                                <input type="number" id="max_marks" name="max_marks" value="100" min="1" step="0.5" required>
+                                <small class="form-hint">Total marks for the exam (will be calculated from question marks)</small>
+                            </div>
+                            <div class="form-group" style="margin-top:24px">
+                                <div style="padding:16px;border-radius:12px;background:var(--surface);border:1px solid var(--border)">
+                                    <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:8px"><i class="fas fa-lightbulb" style="color:var(--warning)"></i> After creating the exam:</p>
+                                    <ol style="font-size:0.8rem;color:var(--text-muted);padding-left:18px;display:flex;flex-direction:column;gap:4px">
+                                        <li>Add questions (MCQ) to the exam</li>
+                                        <li>Publish the exam to make it visible to students</li>
+                                        <li>Students can then start and submit the exam</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <a href="{{ url_for('admin.exams') }}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Create Exam</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

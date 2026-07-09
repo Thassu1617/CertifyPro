@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}Exam Result — CertifyPro{% endblock %}
+{% block content %}
+<style>
+.result-container { max-width: 800px; margin: 0 auto; padding: 20px 24px; }
+.result-header { text-align:center;padding:32px;border-radius:var(--radius);margin-bottom:24px }
+.result-icon { font-size:4rem;margin-bottom:12px }
+.result-icon.pass { color:var(--accent);filter:drop-shadow(0 0 20px var(--accent-glow)) }
+.result-icon.fail { color:var(--danger);filter:drop-shadow(0 0 20px var(--danger-glow)) }
+.result-header h2 { font-size:1.6rem;margin-bottom:4px }
+.result-badge-lg { display:inline-block;padding:6px 24px;border-radius:20px;font-size:1.1rem;font-weight:700;margin-top:8px }
+.result-badge-lg.pass { background:rgba(0,212,170,0.15);color:var(--accent);border:2px solid var(--accent) }
+.result-badge-lg.fail { background:rgba(255,71,87,0.15);color:var(--danger);border:2px solid var(--danger) }
+.result-stats { display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:16px;margin-bottom:24px }
+.result-stat { padding:20px;border-radius:var(--radius);text-align:center }
+.result-stat h3 { font-size:1.5rem;font-weight:800 }
+.result-stat p { font-size:0.8rem;color:var(--text-muted);margin-top:4px }
+.result-details { padding:24px;border-radius:var(--radius);margin-bottom:24px }
+.review-list { display:flex;flex-direction:column;gap:16px;margin-bottom:24px }
+.review-item { padding:20px;border-radius:var(--radius);border-left:4px solid }
+.review-item.correct { border-left-color:var(--accent);background:rgba(0,212,170,0.03) }
+.review-item.incorrect { border-left-color:var(--danger);background:rgba(255,71,87,0.03) }
+.review-q { font-size:0.92rem;font-weight:600;margin-bottom:10px }
+.review-options { display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px }
+.review-opt { padding:6px 12px;border-radius:6px;font-size:0.82rem;background:var(--surface) }
+.review-opt.correct-ans { background:rgba(0,212,170,0.15);color:var(--accent);font-weight:600 }
+.review-opt.wrong-ans { background:rgba(255,71,87,0.15);color:var(--danger);font-weight:600 }
+.review-result { font-size:0.82rem;display:flex;align-items:center;gap:6px }
+.review-result i { font-size:1rem }
+.result-actions { display:flex;gap:12px;justify-content:center;margin-top:24px }
+@media(max-width:768px) {
+    .review-options { grid-template-columns:1fr }
+}
+</style>
+
+<div class="result-container fade-in">
+    <div class="result-header glass">
+        <div class="result-icon {{ 'pass' if result.passed else 'fail' }}">
+            <i class="fas {{ 'fa-check-circle' if result.passed else 'fa-times-circle' }}"></i>
+        </div>
+        <h2>{{ exam.title }}</h2>
+        <p style="color:var(--text-muted);margin-top:4px">{{ exam.course.course_name }}</p>
+        <div class="result-badge-lg {{ 'pass' if result.passed else 'fail' }}">
+            {{ 'PASSED' if result.passed else 'FAILED' }}
+        </div>
+    </div>
+
+    <div class="result-stats">
+        <div class="result-stat glass">
+            <h3>{{ "%.1f"|format(result.score) }}</h3>
+            <p>Score / {{ "%.0f"|format(result.total_marks) }}</p>
+        </div>
+        <div class="result-stat glass">
+            <h3>{{ "%.1f"|format(result.percentage) }}%</h3>
+            <p>Percentage</p>
+        </div>
+        <div class="result-stat glass">
+            <h3>{{ result.correct_answers }}/{{ result.total_questions }}</h3>
+            <p>Correct Answers</p>
+        </div>
+        <div class="result-stat glass">
+            <h3>{{ result.total_questions - result.correct_answers }}</h3>
+            <p>Incorrect</p>
+        </div>
+    </div>
+
+    <div class="result-details glass">
+        <h3 style="font-size:1rem;margin-bottom:16px"><i class="fas fa-list" style="color:var(--primary);margin-right:8px"></i> Question Review</h3>
+        <div class="review-list">
+            {% for q in questions %}
+            {% set answer = answers|selectattr("question_id", "equalto", q.id)|first %}
+            <div class="review-item {{ 'correct' if answer and answer.is_correct else 'incorrect' }}">
+                <div class="review-q">Q{{ loop.index }}: {{ q.question_text }}</div>
+                <div class="review-options">
+                    {% for letter, opt in [('A', q.option_a), ('B', q.option_b), ('C', q.option_c), ('D', q.option_d)] %}
+                    <div class="review-opt {{ 'correct-ans' if letter == q.correct_answer else ('wrong-ans' if letter == answer.selected_answer and letter != q.correct_answer) }}">
+                        {{ letter }}. {{ opt }}
+                        {% if letter == q.correct_answer %}<i class="fas fa-check" style="margin-left:4px"></i>{% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="review-result">
+                    {% if answer and answer.is_correct %}
+                    <i class="fas fa-check-circle" style="color:var(--accent)"></i> <span style="color:var(--accent)">Correct (+{{ "%.0f"|format(q.marks) }} marks)</span>
+                    {% elif answer and answer.selected_answer %}
+                    <i class="fas fa-times-circle" style="color:var(--danger)"></i> <span style="color:var(--danger)">Incorrect — Your answer: {{ answer.selected_answer }}. Correct: {{ q.correct_answer }}</span>
+                    {% else %}
+                    <i class="fas fa-minus-circle" style="color:var(--text-muted)"></i> <span style="color:var(--text-muted)">Not answered. Correct: {{ q.correct_answer }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% if prediction %}
+    <div class="result-details glass" style="margin-top:24px">
+        <h3 style="font-size:1rem;margin-bottom:16px"><i class="fas fa-robot" style="color:var(--primary);margin-right:8px"></i> AI Performance Prediction</h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px">
+            <div style="text-align:center;padding:12px;background:var(--surface);border-radius:10px">
+                <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:4px">Pass/Fail</div>
+                <span class="badge {{ 'pass' if prediction.predicted_pass == 'Pass' else 'fail' }}" style="font-size:0.9rem;padding:4px 14px">{{ prediction.predicted_pass }}</span>
+            </div>
+            <div style="text-align:center;padding:12px;background:var(--surface);border-radius:10px">
+                <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:4px">Predicted Grade</div>
+                <span class="badge grade-{{ prediction.predicted_grade|lower }}" style="font-size:0.9rem;padding:4px 14px">{{ prediction.predicted_grade }}</span>
+            </div>
+            <div style="text-align:center;padding:12px;background:var(--surface);border-radius:10px">
+                <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:4px">Performance</div>
+                {% set perf = prediction.predicted_performance|lower|replace(' ', '_') %}
+                <span class="badge perf-{{ perf }}" style="font-size:0.9rem;padding:4px 14px">{{ prediction.predicted_performance }}</span>
+            </div>
+            <div style="text-align:center;padding:12px;background:var(--surface);border-radius:10px">
+                <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:4px">Confidence</div>
+                {% set conf = (prediction.confidence_score * 100)|round(1) %}
+                <div class="confidence-bar" style="margin:0 auto;max-width:140px">
+                    <div class="confidence-fill" style="width:{{ conf }}%"></div>
+                    <span class="confidence-text">{{ conf }}%</span>
+                </div>
+            </div>
+        </div>
+        <div style="padding:12px;background:var(--surface);border-radius:10px;font-size:0.82rem;color:var(--text-muted)">
+            <i class="fas fa-info-circle" style="color:var(--primary);margin-right:6px"></i>
+            Based on <strong>{{ "%.1f"|format(result.percentage) }}%</strong> score, <strong>{{ result.correct_answers }}/{{ result.total_questions }}</strong> correct answers
+        </div>
+    </div>
+    {% endif %}
+
+    {% if certificate %}
+    <div class="result-details glass" style="margin-top:24px;text-align:center;border:2px solid var(--accent)">
+        <h3 style="font-size:1rem;margin-bottom:12px"><i class="fas fa-certificate" style="color:var(--accent);margin-right:8px"></i> Certificate Eligible</h3>
+        <p style="color:var(--text-muted);margin-bottom:16px">Congratulations! You scored above 70%. Your certificate has been generated.</p>
+        <a href="{{ url_for('student.download_certificate', cert_id=certificate.id) }}" class="btn btn-primary">
+            <i class="fas fa-download"></i> Download Certificate
+        </a>
+    </div>
+    {% endif %}
+
+    <div class="result-actions">
+        <a href="{{ url_for('student.exams') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Exams</a>
+        <a href="{{ url_for('student.dashboard') }}" class="btn btn-primary"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+    </div>
+</div>
+{% endblock %}

@@ -15,3 +15,6 @@ static/certificates_output/*
 dist/
 build/
 .Python
+flask_error.txt
+flask_output.txt
+test_feature4.py

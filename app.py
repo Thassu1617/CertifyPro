@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_login import LoginManager
 from config import Config
-from database import db, init_db
+from database import db
 from database.models import User
 
 login_manager = LoginManager()
@@ -35,6 +35,13 @@ def create_app():
             )
             db.session.add(admin)
             db.session.commit()
+        try:
+            from database.models import Course
+            if not Course.query.first():
+                from seed_data import seed
+                seed()
+        except Exception:
+            pass
 
     from routes.main import main_bp
     from routes.auth import auth_bp

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Edit Question — CertifyPro{% endblock %}
+{% block content %}
+<div class="admin-layout">
+    <aside class="admin-sidebar glass">{% include "admin/_sidebar.html" %}</aside>
+    <div class="admin-main">
+        {% include "admin/_topbar.html" %}
+        <div class="admin-content">
+            <div class="page-header">
+                <h1><i class="fas fa-edit"></i> Edit Question</h1>
+                <a href="{{ url_for('admin.exam_questions', exam_id=question.exam_id) }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back</a>
+            </div>
+
+            <div class="form-card glass fade-in">
+                <form method="POST" class="admin-form">
+                    <div class="form-group">
+                        <label for="question_text"><i class="fas fa-question-circle"></i> Question <span class="required">*</span></label>
+                        <textarea id="question_text" name="question_text" rows="3" required style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:11px 14px;border-radius:var(--radius-sm);font-size:0.88rem;font-family:inherit;outline:none;width:100%">{{ question.question_text }}</textarea>
+                    </div>
+
+                    <div class="form-row" style="margin-bottom:0">
+                        <div class="form-group">
+                            <label for="option_a"><i class="fas fa-circle" style="color:#ff6b6b"></i> Option A</label>
+                            <input type="text" id="option_a" name="option_a" value="{{ question.option_a }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="option_b"><i class="fas fa-circle" style="color:#4ecdc4"></i> Option B</label>
+                            <input type="text" id="option_b" name="option_b" value="{{ question.option_b }}" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="option_c"><i class="fas fa-circle" style="color:#ffd93d"></i> Option C</label>
+                            <input type="text" id="option_c" name="option_c" value="{{ question.option_c }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="option_d"><i class="fas fa-circle" style="color:#6c5ce7"></i> Option D</label>
+                            <input type="text" id="option_d" name="option_d" value="{{ question.option_d }}" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="correct_answer"><i class="fas fa-check-circle" style="color:var(--accent)"></i> Correct Answer</label>
+                            <select id="correct_answer" name="correct_answer" required>
+                                <option value="">Select...</option>
+                                <option value="A" {{ 'selected' if question.correct_answer == 'A' }}>A</option>
+                                <option value="B" {{ 'selected' if question.correct_answer == 'B' }}>B</option>
+                                <option value="C" {{ 'selected' if question.correct_answer == 'C' }}>C</option>
+                                <option value="D" {{ 'selected' if question.correct_answer == 'D' }}>D</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="marks"><i class="fas fa-star"></i> Marks</label>
+                            <input type="number" id="marks" name="marks" value="{{ question.marks }}" min="0.5" max="100" step="0.5" required>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <a href="{{ url_for('admin.exam_questions', exam_id=question.exam_id) }}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Update Question</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

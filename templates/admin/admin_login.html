@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Admin Login — CertifyPro{% endblock %}
+{% block content %}
+<div class="auth-container fade-in" style="margin-top:80px">
+    <div class="auth-card glass">
+        <div class="auth-header">
+            <div class="auth-logo"><i class="fas fa-shield-alt"></i></div>
+            <h2>Admin Portal</h2>
+            <p>Restricted access — administrators only</p>
+        </div>
+        <form method="POST" action="{{ url_for('admin.admin_login') }}" class="auth-form">
+            <div class="form-group">
+                <label for="username"><i class="fas fa-user"></i> Admin Username</label>
+                <input type="text" id="username" name="username" placeholder="Enter admin username" required autofocus>
+            </div>
+            <div class="form-group">
+                <label for="password"><i class="fas fa-lock"></i> Password</label>
+                <input type="password" id="password" name="password" placeholder="Enter admin password" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">
+                <i class="fas fa-sign-in-alt"></i> Login as Admin
+            </button>
+        </form>
+        <p class="auth-footer">
+            <a href="{{ url_for('auth.login') }}"><i class="fas fa-arrow-left"></i> Back to User Login</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

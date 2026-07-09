@@ -41,6 +41,49 @@
                     </div>
                     <div class="stat-trend"><i class="fas fa-arrow-up"></i> 15%</div>
                 </div>
+                <div class="stat-card glass fade-in" style="--card-color: #00d4aa;">
+                    <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                    <div class="stat-body">
+                        <h3 class="counter" data-target="{{ stats.passed }}">0</h3>
+                        <p>Predicted Pass</p>
+                    </div>
+                    <div class="stat-trend up">&nbsp;</div>
+                </div>
+                <div class="stat-card glass fade-in" style="--card-color: #ff4757;">
+                    <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
+                    <div class="stat-body">
+                        <h3 class="counter" data-target="{{ stats.failed }}">0</h3>
+                        <p>Predicted Fail</p>
+                    </div>
+                    <div class="stat-trend">&nbsp;</div>
+                </div>
+                <div class="stat-card glass fade-in" style="--card-color: #6c63ff;">
+                    <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+                    <div class="stat-body">
+                        <h3>{{ stats.avg_confidence }}%</h3>
+                        <p>Avg Confidence</p>
+                    </div>
+                    <div class="stat-trend up">&nbsp;</div>
+                </div>
+            </div>
+
+            <div class="dashboard-row">
+                <div class="chart-card glass fade-in">
+                    <div class="chart-header">
+                        <h3><i class="fas fa-chart-pie"></i> Predicted Grade Distribution</h3>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="predGradeChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card glass fade-in">
+                    <div class="chart-header">
+                        <h3><i class="fas fa-chart-bar"></i> Performance Analytics</h3>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="predPerfChart"></canvas>
+                    </div>
+                </div>
             </div>
 
             <div class="dashboard-row">
@@ -119,6 +162,8 @@
 <script>
 const monthlyData = {{ monthly_certs|tojson }};
 const gradeData = {{ grade_data|tojson }};
+const predGradeData = {{ pred_grade_data|tojson }};
+const predPerfData = {{ pred_perf_data|tojson }};
 
 document.addEventListener('DOMContentLoaded', function() {
     const ctx1 = document.getElementById('certChart')?.getContext('2d');
@@ -151,6 +196,58 @@ document.addEventListener('DOMContentLoaded', function() {
             type: 'bar',
             data: { labels: ['Jan','Feb','Mar','Apr','May','Jun'], datasets: [{ data: [0,0,0,0,0,0], backgroundColor: 'rgba(108,99,255,0.4)' }] },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+    }
+
+    const ctx3 = document.getElementById('predGradeChart')?.getContext('2d');
+    if (ctx3) {
+        const labels = Object.keys(predGradeData).length ? Object.keys(predGradeData) : ['A+','A','B','C','D','F'];
+        const values = Object.keys(predGradeData).length ? Object.values(predGradeData) : [0,0,0,0,0,0];
+        new Chart(ctx3, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: ['#6c63ff','#00d4aa','#ff9800','#ff4757','#9C27B0','#e91e63'],
+                    borderWidth: 0,
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: '#8888a0', padding: 12, usePointStyle: true } }
+                },
+                cutout: '65%',
+            }
+        });
+    }
+
+    const ctx4 = document.getElementById('predPerfChart')?.getContext('2d');
+    if (ctx4) {
+        const labels = Object.keys(predPerfData).length ? Object.keys(predPerfData) : ['Excellent','Good','Average','Needs Improvement'];
+        const values = Object.keys(predPerfData).length ? Object.values(predPerfData) : [0,0,0,0];
+        new Chart(ctx4, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Students',
+                    data: values,
+                    backgroundColor: ['rgba(0,212,170,0.6)', 'rgba(108,99,255,0.6)', 'rgba(255,152,0,0.6)', 'rgba(255,71,87,0.6)'],
+                    borderColor: ['#00d4aa','#6c63ff','#ff9800','#ff4757'],
+                    borderWidth: 2,
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8888a0' } },
+                    x: { grid: { display: false }, ticks: { color: '#8888a0' } }
+                }
+            }
         });
     }
 

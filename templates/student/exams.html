@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Available Exams — CertifyPro{% endblock %}
+{% block content %}
+<div class="student-dashboard">
+    <div class="sd-hero fade-in">
+        <div class="sd-hero-avatar">
+            <div class="sd-avatar-placeholder"><i class="fas fa-file-alt"></i></div>
+        </div>
+        <div class="sd-hero-info">
+            <h1>Online Examinations</h1>
+            <div class="sd-hero-meta">
+                <span><i class="fas fa-file-alt"></i> Available Exams</span>
+                <span><i class="fas fa-clock"></i> Timed Assessments</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="sd-cert-grid fade-in">
+        {% for item in exam_data %}
+        {% set exam = item.exam %}
+        {% set result = item.result %}
+        <div class="sd-cert-card glass">
+            <div class="sd-cert-ribbon {{ 'valid' if result and result.passed else ( 'revoked' if result and not result.passed ) }}">
+                {{ 'Passed' if result and result.passed else ( 'Failed' if result else ( 'Completed' if item.has_started else 'Available' ) ) }}
+            </div>
+            <div class="sd-cert-icon"><i class="fas fa-file-alt"></i></div>
+            <h3>{{ exam.title }}</h3>
+            <div class="sd-cert-code"><i class="fas fa-book"></i> {{ exam.course.course_name }}</div>
+            <div class="sd-cert-details">
+                <div class="sd-cert-row"><span>Duration</span> <strong>{{ exam.duration_minutes }} min</strong></div>
+                <div class="sd-cert-row"><span>Questions</span> <strong>{{ exam.total_questions }}</strong></div>
+                <div class="sd-cert-row"><span>Max Marks</span> <strong>{{ "%.0f"|format(exam.max_marks) }}</strong></div>
+                <div class="sd-cert-row"><span>Pass %</span> <strong>{{ "%.0f"|format(exam.passing_percentage) }}%</strong></div>
+                {% if result %}
+                <div class="sd-cert-row"><span>Your Score</span> <strong>{{ "%.1f"|format(result.score) }}/{{ "%.0f"|format(result.total_marks) }} ({{ "%.1f"|format(result.percentage) }}%)</strong></div>
+                {% endif %}
+            </div>
+            <div class="sd-cert-actions">
+                {% if result %}
+                <a href="{{ url_for('student.exam_result', exam_id=exam.id) }}" class="btn btn-primary btn-sm" style="width:100%;justify-content:center">
+                    <i class="fas fa-chart-bar"></i> View Result
+                </a>
+                {% elif item.has_started %}
+                <a href="{{ url_for('student.start_exam', exam_id=exam.id) }}" class="btn btn-primary btn-sm" style="width:100%;justify-content:center">
+                    <i class="fas fa-play"></i> Resume Exam
+                </a>
+                {% else %}
+                <a href="{{ url_for('student.start_exam', exam_id=exam.id) }}" class="btn btn-primary btn-sm" style="width:100%;justify-content:center">
+                    <i class="fas fa-play"></i> Start Exam
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div style="grid-column:1/-1;text-align:center;padding:60px">
+            <i class="fas fa-file-alt" style="font-size:3rem;color:var(--text-muted);opacity:0.3;margin-bottom:16px"></i>
+            <h3 style="color:var(--text-muted)">No exams available</h3>
+            <p style="color:var(--text-muted);opacity:0.7">There are no published exams at the moment. Check back later.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -40,6 +40,10 @@
             <div class="sd-stat-icon" style="--card-color:var(--danger)"><i class="fas fa-brain"></i></div>
             <div class="sd-stat-body"><h3>{{ predictions|length }}</h3><p>AI Predictions</p></div>
         </div>
+        <a href="{{ url_for('student.exams') }}" class="sd-stat-card glass" style="text-decoration:none;cursor:pointer">
+            <div class="sd-stat-icon" style="--card-color:#ff9800"><i class="fas fa-file-alt"></i></div>
+            <div class="sd-stat-body"><h3>{{ student.exam_results|length }}</h3><p>Exams Taken</p></div>
+        </a>
     </div>
 
     <div class="sd-grid fade-in">
@@ -88,32 +92,36 @@
                 <h3><i class="fas fa-brain"></i> AI Performance Prediction</h3>
             </div>
             <div class="sd-card-body">
-                {% if pred %}
+                {% set active_pred = exam_pred if exam_pred else pred %}
+                {% if active_pred %}
                 <div class="sd-prediction-card">
+                    <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:8px">
+                        {% if exam_pred %}Based on exam score: <strong>{{ "%.1f"|format(exam_pred.percentage) }}%</strong>{% else %}Based on attendance, assignments, quiz marks{% endif %}
+                    </div>
                     <div class="sd-pred-grid">
                         <div class="sd-pred-item">
                             <span class="sd-pred-label">Pass/Fail</span>
-                            <span class="badge {{ 'pass' if pred.predicted_pass == 'Pass' else 'fail' }}" style="font-size:0.95rem">{{ pred.predicted_pass }}</span>
+                            <span class="badge {{ 'pass' if active_pred.predicted_pass == 'Pass' else 'fail' }}" style="font-size:0.95rem">{{ active_pred.predicted_pass }}</span>
                         </div>
                         <div class="sd-pred-item">
                             <span class="sd-pred-label">Predicted Grade</span>
-                            <span class="badge grade-{{ pred.predicted_grade|lower }}">{{ pred.predicted_grade }}</span>
+                            <span class="badge grade-{{ active_pred.predicted_grade|lower }}">{{ active_pred.predicted_grade }}</span>
                         </div>
                         <div class="sd-pred-item">
                             <span class="sd-pred-label">Performance</span>
-                            <span class="badge perf-{{ pred.predicted_performance|lower }}">{{ pred.predicted_performance }}</span>
+                            <span class="badge perf-{{ active_pred.predicted_performance|lower|replace(' ', '_') }}">{{ active_pred.predicted_performance }}</span>
                         </div>
                     </div>
                     <div class="sd-pred-confidence">
                         <span>Confidence</span>
                         <div class="confidence-bar">
-                            <div class="confidence-fill" style="width:{{ (pred.confidence_score * 100)|round(1) }}%"></div>
-                            <span class="confidence-text">{{ (pred.confidence_score * 100)|round(1) }}%</span>
+                            <div class="confidence-fill" style="width:{{ (active_pred.confidence_score * 100)|round(1) }}%"></div>
+                            <span class="confidence-text">{{ (active_pred.confidence_score * 100)|round(1) }}%</span>
                         </div>
                     </div>
                 </div>
                 {% else %}
-                <div class="sd-empty"><i class="fas fa-robot"></i><p>No predictions yet. Predictions are generated when marks are added.</p></div>
+                <div class="sd-empty"><i class="fas fa-robot"></i><p>No predictions yet. Predictions are generated when marks are added or exam is submitted.</p></div>
                 {% endif %}
             </div>
         </div>
