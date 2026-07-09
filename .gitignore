@@ -6,6 +6,7 @@ __pycache__/
 venv/
 .venv/
 database/*.db
+!database/.gitkeep
 static/uploads/profiles/*
 static/certificates_output/*
 !static/uploads/profiles/.gitkeep
