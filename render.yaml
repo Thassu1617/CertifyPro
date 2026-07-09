@@ -2,7 +2,7 @@ services:
   - type: web
     name: certifypro
     runtime: python
-    buildCommand: ""
+    buildCommand: pip install -r requirements.txt
     startCommand: gunicorn wsgi:app --workers 2 --timeout 120
     envVars:
       - key: PYTHON_VERSION
