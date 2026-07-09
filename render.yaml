@@ -3,7 +3,7 @@ services:
     name: certifypro
     runtime: python
     buildCommand: ""
-    startCommand: gunicorn run:app --workers 2 --timeout 120
+    startCommand: gunicorn wsgi:app --workers 2 --timeout 120
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
